@@ -1,3 +1,4 @@
 import CarReq from './car'
+import { subcribe } from './ditto'
 
-export {CarReq}
+export {CarReq,subcribe}

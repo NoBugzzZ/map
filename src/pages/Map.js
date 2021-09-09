@@ -9,7 +9,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import { CarReq } from '../requests';
+import { CarReq, subcribe } from '../requests';
 
 
 const useStyle = makeStyles({
@@ -25,16 +25,129 @@ const useStyle = makeStyles({
 export default function(){
   const classes = useStyle();
   const [rows,setRows] = React.useState([])
-  const [infoWindow,setInfoWindow] = React.useState({visible: false, position: { longitude:120, latitude:30 }, content: 'content' });
-
   const [checked, setChecked] = React.useState([])
   const [selectAll, setSelectAll] = React.useState(false)
-  const [cars, setCars] = React.useState([])
-  const [car,setCar]=React.useState(null)
-  const [map,setMap]=React.useState(null)
-  const [zoom,setZoom]=React.useState(1)
+  const [selectRow,setSelectRow] = React.useState(null)
+  const [selectRows,setSelectRows] = React.useState([])
+  const [message,setMessage] = React.useState(null)
 
-  const handleClick = (row) => {
+  const [map,setMap] = React.useState(null)
+  const [zoom,setZoom] = React.useState(1)
+  const [infoWindow,setInfoWindow] = React.useState({visible: false, position: { longitude:120, latitude:30 }, content: 'content' });
+
+  const [directions,setDirections] = React.useState([])
+  const [direction,setDirection] = React.useState(null)
+  
+  React.useEffect(()=>{
+    CarReq.getAllId().then(data=>{
+      const {items}=data
+      const newRows=items.map(item=>{
+        const {thingId}=item
+        return {id:thingId.replace('ics.rodaki:vehicle-',''),...item}
+      })
+      setRows(newRows)
+    })
+  },[])
+
+  React.useEffect(()=>{
+    if(selectRow){
+      setSelectRows([...selectRows,selectRow])
+    }
+  },[selectRow])
+
+  React.useEffect(()=>{
+    if(message){
+      const {thingId,features:{location:{properties:{value}}}}=JSON.parse(message)
+      let newSelectRows=[...selectRows]
+      const currentIndex=newSelectRows.findIndex(element=>element.thingId===thingId)
+      const LngLat=value.split(';')
+      const position={longitude:parseFloat(LngLat[0]),latitude:parseFloat(LngLat[1])}
+      newSelectRows[currentIndex].position=position
+      newSelectRows[currentIndex].path=[...newSelectRows[currentIndex].path,position]
+      setSelectRows(newSelectRows)
+    }
+  },[message])
+
+  React.useEffect(()=>{
+    if(selectRows){
+      const newDirections=[...directions]
+      for(const dir of directions){
+        if(selectRows.findIndex(element=>element.id===dir.id)===-1){
+          const currentIndex=newDirections.findIndex(element=>element.id===dir.id)
+          newDirections.splice(currentIndex,1)
+        }
+      }
+      setDirections(newDirections)
+      for(const sr of selectRows){
+        const len=sr.path.length
+        if(len===0||len===1){
+          setDirection({
+            id:sr.id,
+            color:sr.color,
+            direction:[]
+          })
+        }else{
+          if(newDirections.findIndex(element=>element.id===sr.id)===-1){
+            for(let i=0;i<len-1;i++){
+              getDirection({id:sr.id,color:sr.color},sr.path[i],sr.path[i+1],i)
+            }
+          }else{
+            getDirection({id:sr.id,color:sr.color},sr.path[len-2],sr.path[len-1],len-2)
+          }
+        }
+      }
+      
+    }
+  },[selectRows])
+
+  React.useEffect(()=>{
+    if(direction){
+      const newDirections=[...directions]
+      const currentIndex=newDirections.findIndex(element=>element.id===direction.id)
+      if(currentIndex===-1){
+        newDirections.push(direction)
+      }else{
+        newDirections[currentIndex].direction={...newDirections[currentIndex].direction,...direction.direction}
+      }
+      setDirections(newDirections)
+    }
+  },[direction])
+
+  const getDirection = (context,origin,destination,index) => {
+    CarReq.direction(origin,destination).then(data=>{
+      if(data.status==='1'){
+        let d=[]
+        const {steps}=data.route.paths[0]
+        steps.forEach((stepValue,stepIndex)=>{
+          const {polyline:stepPolyline}=stepValue
+          const stepLngLats=stepPolyline.split(';')
+          stepLngLats.forEach((stepLngLatValue)=>{
+            const lnglat=stepLngLatValue.split(',')
+            d.push({longitude:parseFloat(lnglat[0]),latitude:parseFloat(lnglat[1])})
+          })
+
+        })
+        setDirection({
+          ...context,
+          direction:{
+            [index]:d
+          }
+        })
+      }else{
+        setDirection({
+          ...context,
+          direction:{
+            [index]:[
+              {...origin},
+              {...destination}
+              ]
+          }
+        })
+      }
+    })
+  }
+
+  const handleListItemClick = (row) => {
     const currentTarget = checked.indexOf(row.id)
     const newChecked = [...checked]
     if( currentTarget === -1){
@@ -44,22 +157,13 @@ export default function(){
     }
     setChecked(newChecked)
   }
-
-  React.useEffect(()=>{
-    if(car){
-      setCars([...cars,car])
-    }
-  },[car])
-
   const handleSelectAll = () => {
     if(selectAll){
       setChecked([])
     }else{
-      const newChecked = [...checked]
+      const newChecked = []
       for(let row of rows){
-        if(newChecked.indexOf(row.id)===-1){
-          newChecked.push(row.id)
-        }
+        newChecked.push(row.id)
       }
       setChecked(newChecked)
     }
@@ -67,72 +171,47 @@ export default function(){
   }
 
   const handleButtonClick = () => {
-    const newCars=[...cars]
-    for(let cc of cars){
-      const index = newCars.findIndex(element=>element.id===cc.id)
-      if(checked.indexOf(cc.id)===-1){
-        newCars.splice(index,1)
+    const newSelectRows=[...selectRows]
+    for(const selectRow of selectRows){
+      if(checked.indexOf(selectRow.id)===-1){
+        const currentIndex = newSelectRows.findIndex(element=>element.id===selectRow.id)
+        selectRow.sse.close()
+        newSelectRows.splice(currentIndex,1)
       }
     }
-    setCars(newCars)
-
-    const newChecked=[]
-    for(let ckd of checked){
-      if(newCars.findIndex(element=>element.id===ckd)===-1){
-        newChecked.push(ckd)
-      }
-    }
-
-    for(let ckd of newChecked){
-      CarReq.get(ckd).then(data=>{
-        let positions=[]
-        for(let d of data){
-          if(d!='null'){
-            const LngLat=d.split(';')
-            positions=[...positions,{longitude:parseFloat(LngLat[0]),latitude:parseFloat(LngLat[1])}]
-          }
+    setSelectRows(newSelectRows)
+    if(newSelectRows.length<checked.length){
+      for(const ckd of checked){
+        if(newSelectRows.findIndex(element=>element.id===ckd)===-1){
+          CarReq.get(ckd).then(data=>{
+            const positions=transformFormat(data)
+            const currentIndex=positions.length-1
+            const row=rows.find(element=>element.id===ckd)
+            setSelectRow({
+              id:ckd,
+              thingId:row.thingId,
+              position:currentIndex>=0?positions[currentIndex]:{},
+              path:positions,
+              color:'rgb('+Math.floor(Math.random()*255)+','+Math.floor(Math.random()*255)+','+Math.floor(Math.random()*255)+')',
+              sse:subcribe(row.thingId,(mes)=>{
+                setMessage(mes)
+              })
+            })
+          })
         }
-        const index=positions.length-1
-        setCar({
-          id:ckd,
-          position:positions[index],
-          path:positions,
-          color:'rgb('+Math.floor(Math.random()*255)+','+Math.floor(Math.random()*255)+','+Math.floor(Math.random()*255)+')',
-        })
-      })
+      }
     }
-    
   }
 
-
-  React.useEffect(()=>{
-    CarReq.getAllId().then(data=>{
-      const {items}=data
-      const newRows=items.map(item=>{
-        const {thingId}=item
-        return {id:thingId.replace('ics.rodaki:vehicle-',''),...item}
-      })
-      setRows(newRows)
-
-    })
-  },[])
-
-  const displayCircle = () => {
-    if(cars.length>0){
-      let circle=[]
-      for(const cc of cars){
-        for(const pos of cc.path){
-          circle.push(
-          <Circle
-            center={pos}
-            radius={10000/zoom}
-            style={{fillColor:cc.color,strokeColor:cc.color}}
-          ></Circle>)
-        }
+  const transformFormat = (positions) => {
+    const res=[]
+    for(let p of positions){
+      if(p!='null'){
+        const LngLat=p.split(';')
+        res.push({longitude:parseFloat(LngLat[0]),latitude:parseFloat(LngLat[1])})
       }
-      return circle
     }
-    return null
+    return res
   }
 
   return(
@@ -158,7 +237,7 @@ export default function(){
         <List dense className={classes.list}>
             {rows.map(row=>{
               return(
-                <ListItem key={row.id} button onClick={()=>handleClick(row)}>
+                <ListItem key={row.id} button onClick={()=>handleListItemClick(row)}>
                   <ListItemIcon>
                     <Checkbox
                       checked={checked.indexOf(row.id)!==-1}
@@ -197,7 +276,7 @@ export default function(){
             }}
           />
           <Markers
-            markers={cars}
+            markers={selectRows}
             useCluster={true}
             events={{
               click: (e, marker) => {
@@ -217,18 +296,42 @@ export default function(){
             }}
           >
           </Markers>
-          {cars.length>0?cars.map(cc=>{
+          {/* {selectRows.length>0?selectRows.map(r=>{
             return(
             <Polyline
-              path={cc.path}
+              path={r.path}
               visible={true}
-              style={{strokeColor:cc.color}}
+              style={{strokeColor:r.color}}
             >
             </Polyline>
             )
           })
-          :null}
-          {displayCircle()}
+          :null} */}
+          {directions.length>0?directions.map(dir=>{
+            let path=[]
+            for(const i in dir.direction){
+              path=[...path,...dir.direction[i]]
+            }
+            return(
+              <Polyline
+                path={path}
+                visible={true}
+                style={{strokeColor:dir.color}}
+              >
+              </Polyline>
+            )
+          }):null}
+          {selectRows.length>0?selectRows.map(sr=>{
+            return sr.path.map(s=>{
+              return(
+                <Circle
+                  center={s}
+                  radius={20000/zoom}
+                  style={{fillColor:sr.color,strokeColor:sr.color}}
+                ></Circle>
+              )
+            })
+          }):null}
         </Map>
       </Grid>
     </Grid>

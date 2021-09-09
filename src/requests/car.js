@@ -25,4 +25,11 @@ export default{
     })
     return data
   },
+  async direction(origin,destination){
+    const {data} = await axios.request({
+      url:'https://restapi.amap.com/v3/direction/driving?key=f4833b485afbe530c057be70b1893ed5&destination='+destination.longitude+','+destination.latitude+'&origin='+origin.longitude+','+origin.latitude,
+      method:'GET',
+    })
+    return data
+  },
 }
