@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const api='http://localhost:10087/apis/ListHistoricalLocation'
+const api='http://localhost:10086/apis/ListHistoricalLocation'
 
 export default{
   async get(id){
@@ -16,7 +16,7 @@ export default{
   },
   async getAllId(){
     const {data} = await axios.request({
-      url:'http://localhost:8081/api/2/search/things?filter=eq(definition,"ics.rodaki:vehicle:1.0")&option=size(200)',
+      url:'http://localhost:8080/api/2/search/things?filter=eq(definition,"ics.rodaki:vehicle:1.0")&option=size(200)',
       method:'GET',
       auth:{
         username: 'ditto',
@@ -27,7 +27,7 @@ export default{
   },
   async direction(origin,destination){
     const {data} = await axios.request({
-      url:'https://restapi.amap.com/v3/direction/driving?key=f4833b485afbe530c057be70b1893ed5&destination='+destination.longitude+','+destination.latitude+'&origin='+origin.longitude+','+origin.latitude,
+      url:'https://restapi.amap.com/v3/direction/driving?key='+'f4833b485afbe530c057be70b1893ed5'+'&destination='+destination.longitude+','+destination.latitude+'&origin='+origin.longitude+','+origin.latitude,
       method:'GET',
     })
     return data
