@@ -14,9 +14,28 @@ export default{
     })
     return data
   },
-  async getAllId(){
+  async getVehicles(cursor){
+    var url='http://localhost:8080/api/2/search/things?filter=eq(definition,"ics.rodaki:vehicle:1.0")&option=size(200)'
+    if(cursor){
+      url+=',cursor('+cursor+')'
+    }
     const {data} = await axios.request({
-      url:'http://localhost:8080/api/2/search/things?filter=eq(definition,"ics.rodaki:vehicle:1.0")&option=size(200)',
+      url,
+      method:'GET',
+      auth:{
+        username: 'ditto',
+        password: 'ditto'
+      }
+    })
+    return data
+  },
+  async getGantries(cursor){
+    var url='http://localhost:8080/api/2/search/things?filter=eq(definition,"ics.rodaki:gantry:1.0")&option=size(200)'
+    if(cursor){
+      url+=',cursor('+cursor+')'
+    }
+    const {data} = await axios.request({
+      url,
       method:'GET',
       auth:{
         username: 'ditto',
@@ -31,5 +50,5 @@ export default{
       method:'GET',
     })
     return data
-  },
+  }, 
 }

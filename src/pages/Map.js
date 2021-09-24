@@ -16,6 +16,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
+import Slider from '@mui/material/Slider';
 
 const useStyle = makeStyles({
   container:{
@@ -30,11 +31,16 @@ const useStyle = makeStyles({
 export default function(){
   const classes = useStyle();
   const [rows,setRows] = React.useState([])
+  const [rowsCallback,setRowsCallback] = React.useState(null)
+  const [gantries,setGantries] = React.useState([])
+  const [gantriesCallback,setGantriesCallback] = React.useState(null)
+
   const [checked, setChecked] = React.useState([])
   const [selectAll, setSelectAll] = React.useState(false)
   const [selectRow,setSelectRow] = React.useState(null)
   const [selectRows,setSelectRows] = React.useState([])
   const [message,setMessage] = React.useState(null)
+  const [historyPositions,setHistoryPositions] = React.useState([])
 
   const [map,setMap] = React.useState(null)
   const [zoom,setZoom] = React.useState(5)
@@ -44,10 +50,8 @@ export default function(){
   const [direction,setDirection] = React.useState(null)
 
   const [startAndEndTime,setStartAndEndTime] = React.useState(null)
-  const [predictPeriod,setPredictPeriod] = React.useState([])
   const [predictTime,setPredictTime] = React.useState('')
   const [predictPositions,setPredictPositions] = React.useState([])
-  const [predictPosition,setPredictPosition] = React.useState(null)
 
   Object.size = function(obj) {
     var size = 0,
@@ -58,79 +62,104 @@ export default function(){
     return size;
   };
 
-  React.useEffect(()=>{
-    if(predictTime!==''){
-      const t=new Date(predictTime).getTime()
-      for(let d of directions){
-        if(Object.size(d.direction)>0){
-          const {path}=d
-          for(let i=0;i<path.length-1;i++){
-            const stime=new Date(path[i].timestamp).getTime()
-            const etime=new Date(path[i+1].timestamp).getTime()
-            if(t>=stime&&t<=etime){
-              // console.log(d.amap[i])
-              const v=Math.floor(d.amap[i].distance/((etime-stime)/1000))
-              const len=v*((t-stime)/1000)
-              // console.log(len)
-              let sPath=0
-              let ePath=0
-              for(let step of d.amap[i].steps){
-                // console.log(step)
+const getPredictPosition = (t,d) => {
+    if(Object.size(d.direction)>0){
+      const {path}=d
+      for(let i=0;i<path.length-1;i++){
+        const stime=new Date(path[i].timestamp).getTime()
+        const etime=new Date(path[i+1].timestamp).getTime()
+        if(t>=stime&&t<=etime){
+          const v=Math.floor(d.amap[i].distance/((etime-stime)/1000))
+          const len=v*((t-stime)/1000)
+          let sPath=0
+          let ePath=0
+          for(let step of d.amap[i].steps){
+            sPath=ePath
+            ePath+=parseInt(step.distance)
+            if(len>=sPath&&len<=ePath){
+              ePath=sPath
+              for(let tmc of step.tmcs){
                 sPath=ePath
-                ePath+=parseInt(step.distance)
-                // console.log(sPath,ePath)
+                ePath+=parseInt(tmc.distance)
                 if(len>=sPath&&len<=ePath){
-                  // console.log(step)
-                  ePath=sPath
-                  for(let tmc of step.tmcs){
-                    sPath=ePath
-                    ePath+=parseInt(tmc.distance)
-                    if(len>=sPath&&len<=ePath){
-                      const pp=tmc.polyline.split(';')[0].split(',')
-                      setPredictPosition({position:{longitude:parseFloat(pp[0]),latitude:parseFloat(pp[1])},id:d.id,offset:{x:-7,y:-7}})
-                      break
-                    }
-                  }
+                  const pp=tmc.polyline.split(';')[0].split(',')
+                  return({position:{longitude:parseFloat(pp[0]),latitude:parseFloat(pp[1])},id:d.id,offset:{x:-7,y:-7}})
                   break;
                 }
               }
               break;
             }
           }
+          break;
         }
       }
     }
+    return null
+}
+
+  React.useEffect(()=>{
+    const newPredictPositions=[]
+    if(predictTime!==''){
+      const currentPredictTime=new Date(predictTime).getTime()
+      for(let d of directions){
+        if(d.path.length<2) continue
+
+        const currentStartTime=new Date(d.path[0].timestamp).getTime()
+        const currentEndTime=new Date(d.path[d.path.length-1].timestamp).getTime()
+        if(currentPredictTime<currentStartTime||currentPredictTime>currentEndTime) continue
+
+        const newPredictPosition=getPredictPosition(currentPredictTime,d)
+        if(newPredictPosition){
+          newPredictPositions.push(newPredictPosition)
+        }
+      }
+    }
+    setPredictPositions(newPredictPositions)
   },[predictTime])
 
-  React.useEffect(()=>{
-    if(predictPosition){
-      let newPredictPositions=[...predictPositions]
-      const index=newPredictPositions.findIndex(p=>p.id===predictPosition.id)
-      if(index!==-1){
-        newPredictPositions[index]=predictPosition
-      }else{
-        newPredictPositions.push(predictPosition)
-      }
-      setPredictPositions(newPredictPositions)
-    }
-  },[predictPosition])
-
-  React.useEffect(()=>{
-    if(predictPositions.length>0){
-      // console.log(predictPositions)
-    }
-  },[predictPositions])
-
-  React.useEffect(()=>{
-    CarReq.getAllId().then(data=>{
-      const {items}=data
+  const getVehicles = (cursor,callback) => {
+    CarReq.getVehicles(cursor).then(data=>{
+      const {items,cursor}=data
       const newRows=items.map(item=>{
         const {thingId}=item
         return {id:thingId.replace('ics.rodaki:vehicle-',''),...item}
       })
-      setRows(newRows)
+      callback(newRows)
+      // getVehicles(cursor,callback)
     })
+  }
+
+  React.useEffect(()=>{
+    getVehicles('',setRowsCallback)
   },[])
+
+  React.useEffect(()=>{
+    if(rowsCallback){
+      setRows([...rows,...rowsCallback])
+    }
+  },[rowsCallback])
+
+  const getGantries = (cursor,callback) => {
+    CarReq.getGantries(cursor).then(data=>{
+      let {items,cursor} = data
+      for(const index in items){
+        const {attributes:{longtitude:longitude,latitude}}=items[index]
+        items[index].position={longitude,latitude}
+      }
+      callback(items)
+      // getGantries(cursor,callback)
+    })
+  }
+
+  React.useEffect(()=>{
+    getGantries('',setGantriesCallback)
+  },[])
+
+  React.useEffect(()=>{
+    if(gantriesCallback){
+      setGantries([...gantries,...gantriesCallback])
+    }
+  },[gantriesCallback])
 
   React.useEffect(()=>{
     if(selectRow){
@@ -153,7 +182,6 @@ export default function(){
 
   React.useEffect(()=>{
     if(selectRows){
-
       const newDirections=[...directions]
       for(const dir of directions){
         if(selectRows.findIndex(element=>element.id===dir.id)===-1){
@@ -182,26 +210,29 @@ export default function(){
           }
         }
       }
-      setPredictTime('')
-      setPredictPositions([])
-      setStartAndEndTime(getStartAndEndTime(selectRows))
     }
   },[selectRows])
 
   React.useEffect(()=>{
-    if(startAndEndTime){
-      const start=new Date(startAndEndTime.start).getTime()
-      const end=new Date(startAndEndTime.end).getTime()
-      const count=10
-      const interval=Math.round((end-start)/count)
-      const newPredictPeriod=[]
-      for(let i=0;i<count;i++){
-        newPredictPeriod.push(new Date(start+interval*i).toISOString())
+    setPredictTime('')
+    setPredictPositions([])
+    setStartAndEndTime(getStartAndEndTime(selectRows))
+  },[selectRows])
+
+  React.useEffect(()=>{
+    const newHistoryPositions=[]
+    if(selectRows){
+      for(let sr of selectRows){
+        const maxIndex=sr.path.length-1
+        for(let i=0;i<maxIndex;i++){
+          const{longitude,latitude,timestamp}=sr.path[i]
+          newHistoryPositions.push({id:sr.id,position:{longitude,latitude},timestamp,offset:{x:-7,y:-7}})
+        }
       }
-      newPredictPeriod.push(new Date(end).toISOString())
-      setPredictPeriod(newPredictPeriod)
+      
     }
-  },[startAndEndTime])
+    setHistoryPositions(newHistoryPositions)
+  },[selectRows])
 
   React.useEffect(()=>{
     if(direction){
@@ -410,6 +441,7 @@ export default function(){
           <Markers
             markers={selectRows}
             useCluster={true}
+            zIndex={10}
             events={{
               click: (e, marker) => {
                 const extData = marker.getExtData()
@@ -442,17 +474,8 @@ export default function(){
             }}
           >
           </Markers>
-          {/* {selectRows.length>0?selectRows.map(r=>{
-            return(
-            <Polyline
-              path={r.path}
-              visible={true}
-              style={{strokeColor:r.color}}
-            >
-            </Polyline>
-            )
-          })
-          :null} */}
+
+
           {directions.length>0?directions.map(dir=>{
             let path=[]
             for(const i in dir.direction){
@@ -468,121 +491,118 @@ export default function(){
               </Polyline>
             )
           }):null}
-          {selectRows.length>0?selectRows.map(sr=>{
-            const newPath=[]
-            const maxIndex=sr.path.length-1
-            for(let i=0;i<maxIndex;i++){
-              const{longitude,latitude,timestamp}=sr.path[i]
-              newPath.push({position:{longitude,latitude},timestamp,offset:{x:-7,y:-7}})
-            }
-            return(
-              <Markers
-                markers={newPath}
-                useCluster={false}
-                zIndex={10}
-                events={{
-                  click: (e, marker) => {
-                    const extData = marker.getExtData()
-                    const {position:{longitude,latitude},timestamp}=extData
-                    setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: timestamp,size:{width:180,height:25}, offset:[0,-35]})
+
+
+          <Markers
+            markers={historyPositions}
+            useCluster={false}
+            zIndex={10}
+            events={{
+              click: (e, marker) => {
+                const extData = marker.getExtData()
+                const {id,position:{longitude,latitude},timestamp}=extData
+                setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: JSON.stringify({id,timestamp},null,2),size:{width:200,height:50}, offset:[0,-35]})
+              }
+            }}
+            render={extData => {
+              return (
+                <div
+                  style={{
+                    background: `url(https://img.icons8.com/office/30/000000/car.png`,
+                    backgroundSize: 'contain',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'center',
+                    width: '30px',
+                    height: '30px',
+                  }}
+                ></div>
+              )
+            }}
+          >
+          </Markers>
+
+          {/**预测车辆位置 */}
+          <Markers
+            markers={predictPositions}
+            useCluster={false}
+            zIndex={11}
+            events={{
+              click: (e, marker) => {
+                // const extData = marker.getExtData()
+                // const {position:{longitude,latitude},id}=extData
+                // setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: id,size:{width:180,height:25}, offset:[0,-35]})
+              }
+            }}
+            render={extData => {
+              return (
+                <div
+                  style={{
+                    background: `url(https://img.icons8.com/material-sharp/24/000000/car.png`,
+                    backgroundSize: 'contain',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'center',
+                    width: '24px',
+                    height: '24px',
+                  }}
+                ></div>
+              )
+            }}
+          >
+          </Markers>
+
+          <Markers
+            markers={gantries}
+            useCluster={true}
+            zIndex={10}
+            events={{
+              click: (e, marker) => {
+                const extData = marker.getExtData()
+                const {position:{longitude,latitude}}=extData
+                setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: JSON.stringify(extData,null,2),size:{width:500,height:120}, offset:[0,-35]})
+              }
+            }}
+            render={extData => {
+              return (
+                <div
+                  style={{
+                    background: `url(https://img.icons8.com/office/30/000000/overhead-crane.png`,
+                    backgroundSize: 'contain',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'center',
+                    width: '30px',
+                    height: '30px',
+                  }}
+                ></div>
+              )
+            }}
+          >
+          </Markers>
+
+          <div className="customLayer" style={{ position: 'absolute', right: '100px', bottom: '30px' }}>
+            <Box sx={{ width: 200 }}>
+              <Slider min={0} max={1000} valueLabelDisplay='auto' defaultValue={0}  aria-label="slider" 
+                valueLabelFormat={(x)=>{
+                  var start=0
+                  var end=0
+                  if(startAndEndTime){
+                    start=new Date(startAndEndTime.start).getTime()
+                    end=new Date(startAndEndTime.end).getTime()
+                  }
+                  const t=(end-start)*x/1000
+                  return new Date(start+t).toISOString()
+                }}
+                onChange={(event,value,activeThumb)=>{
+                  
+                }}
+                onChangeCommitted={(event,value)=>{
+                  if(startAndEndTime){
+                    const start=new Date(startAndEndTime.start).getTime()
+                    const end=new Date(startAndEndTime.end).getTime()
+                    const t=(end-start)*value/1000
+                    setPredictTime(new Date(start+t).toISOString())
                   }
                 }}
-                render={extData => {
-                  return (
-                    <div
-                      style={{
-                        background: `url(https://img.icons8.com/office/30/000000/car.png`,
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'center',
-                        width: '30px',
-                        height: '30px',
-                      }}
-                    ></div>
-                  )
-                }}
-              >
-              </Markers>
-            )
-            // return sr.path.map((s,index)=>{
-            //   if(maxIndex===index) return null
-            //   return(
-            //     <Circle
-            //       center={s}
-            //       radius={20000/zoom}
-            //       style={{fillColor:sr.color,strokeColor:sr.color}}
-            //       zIndex={10}
-            //       events={{
-            //         click:(e)=>{
-            //           const { longitude, latitude, timestamp }=s
-            //           setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: JSON.stringify({timestamp},null,2),size:{width:300,height:30}, offset:[0,-5]})
-            //         }
-            //       }}
-            //     ></Circle>
-            //   )
-            // })
-          }):null}
-
-
-          {predictPositions.length>0?
-            <Markers
-              markers={predictPositions}
-              useCluster={false}
-              zIndex={11}
-              events={{
-                click: (e, marker) => {
-                  // const extData = marker.getExtData()
-                  // const {position:{longitude,latitude},id}=extData
-                  // setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: id,size:{width:180,height:25}, offset:[0,-35]})
-                }
-              }}
-              render={extData => {
-                return (
-                  <div
-                    style={{
-                      background: `url(https://img.icons8.com/material-sharp/24/000000/car.png`,
-                      backgroundSize: 'contain',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'center',
-                      width: '24px',
-                      height: '24px',
-                    }}
-                  ></div>
-                )
-              }}
-            >
-            </Markers>
-          :null}
-          {/* {predictPositions.length>0?predictPositions.map(p=>{
-            console.log(predictPositions)
-              return(
-                <Circle
-                  center={p.position}
-                  radius={20000/zoom}
-                  style={{fillColor:'black',strokeColor:'black'}}
-                  zIndex={10}
-                ></Circle>
-              )
-          }):null} */}
-
-          <div className="customLayer" style={{ position: 'absolute', right: '30px', bottom: '30px' }}>
-            <Box sx={{ minWidth: 120 }}>
-              <FormControl fullWidth>
-                <InputLabel id="demo-simple-select-label">Time</InputLabel>
-                <Select
-                  labelId="demo-simple-select-label"
-                  id="demo-simple-select"
-                  value={predictTime}
-                  label="Time"
-                  onChange={(e)=>setPredictTime(e.target.value)}
-                >
-                  {predictPeriod.map(p=>{
-                    return(
-                      <MenuItem value={p}>{p}</MenuItem>
-                    )
-                  })}
-                </Select>
-              </FormControl>
+              />
             </Box>
           </div>
 
