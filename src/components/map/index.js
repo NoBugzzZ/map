@@ -4,6 +4,7 @@ import { CarReq } from '../../requests';
 import Box from '@mui/material/Box';
 import Slider from '@mui/material/Slider';
 import Editor from "@monaco-editor/react";
+import moment from 'moment';
 
 export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
 
@@ -102,12 +103,12 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
   React.useEffect(()=>{
     const newPredictPositions=[]
     if(predictTime){
-      const currentPredictTime=new Date(predictTime).getTime()
+      const currentPredictTime=moment(predictTime).unix()
       for(let d of directions){
         if(d.path.length<2) continue
 
-        const currentStartTime=new Date(d.path[0].timestamp).getTime()
-        const currentEndTime=new Date(d.path[d.path.length-1].timestamp).getTime()
+        const currentStartTime=moment(d.path[0].timestamp).unix()
+        const currentEndTime=moment(d.path[d.path.length-1].timestamp).unix()
         if(currentPredictTime<currentStartTime||currentPredictTime>currentEndTime) continue
 
         const newPredictPosition=getPredictPosition(currentPredictTime,d)
@@ -132,11 +133,11 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
     if(Object.size(d.direction)>0){
       const {path}=d
       for(let i=0;i<path.length-1;i++){
-        const stime=new Date(path[i].timestamp).getTime()
-        const etime=new Date(path[i+1].timestamp).getTime()
+        const stime=moment(path[i].timestamp).unix()
+        const etime=moment(path[i+1].timestamp).unix()
         if(t>=stime&&t<=etime){
-          const v=Math.floor(d.amap[i].distance/((etime-stime)/1000))
-          const len=v*((t-stime)/1000)
+          const v=d.amap[i].distance/(etime-stime)
+          const len=Math.floor(v*(t-stime))
           let sPath=0
           let ePath=0
           for(let step of d.amap[i].steps){
@@ -165,22 +166,22 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
 
   const getStartAndEndTime=(timeForselectVehicleRows)=>{
     let res={
-      start:new Date(Date.now()).getTime(),
-      end:new Date('0000-01-01T00:00:00z').getTime()
+      start:moment().unix(),
+      end:moment('0000-01-01T00:00:00z').unix()
     }
     for(let timeForSelectRow of timeForselectVehicleRows){
       const {path}=timeForSelectRow
       for(let p of path){
         const {timestamp}=p
-        const time=new Date(timestamp).getTime()
+        const time=moment(timestamp).unix()
         if(time<res.start) res.start=time
         if(time>res.end) res.end=time
       }
     }
     if(res.start>res.end) return null
     return {
-      start:new Date(res.start).toISOString(),
-      end:new Date(res.end).toISOString()
+      start:moment.unix(res.start).toISOString(),
+      end:moment.unix(res.end).toISOString()
     }
   } 
 
@@ -409,21 +410,21 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
               var start = 0
               var end = 0
               if (startAndEndTime) {
-                start = new Date(startAndEndTime.start).getTime()
-                end = new Date(startAndEndTime.end).getTime()
+                start = moment(startAndEndTime.start).unix()
+                end = moment(startAndEndTime.end).unix()
               }
               const t = (end - start) * x / 1000
-              return new Date(start + t).toISOString()
+              return moment.unix(start + t).toISOString()
             }}
             onChange={(event, value, activeThumb) => {
 
             }}
             onChangeCommitted={(event, value) => {
               if (startAndEndTime) {
-                const start = new Date(startAndEndTime.start).getTime()
-                const end = new Date(startAndEndTime.end).getTime()
+                const start = moment(startAndEndTime.start).unix()
+                const end = moment(startAndEndTime.end).unix()
                 const t = (end - start) * value / 1000
-                setPredictTime(new Date(start + t).toISOString())
+                setPredictTime(moment.unix(start + t).toISOString())
               }
             }}
           />

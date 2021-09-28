@@ -8,6 +8,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import moment from 'moment';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -152,7 +153,7 @@ export default function MapPage() {
       let newselectVehicleRows = [...selectVehicleRows]
       const currentIndex = newselectVehicleRows.findIndex(element => element.thingId === thingId)
       const LngLat = value.split(';')
-      const position = { longitude: parseFloat(LngLat[0]), latitude: parseFloat(LngLat[1]), timestamp: new Date(Date.now()).toISOString() }
+      const position = { longitude: parseFloat(LngLat[0]), latitude: parseFloat(LngLat[1]), timestamp: moment().toISOString() }
       newselectVehicleRows[currentIndex].position = position
       newselectVehicleRows[currentIndex].path = [...newselectVehicleRows[currentIndex].path, position]
       newselectVehicleRows[currentIndex].ditto.features.location.properties.value = value
