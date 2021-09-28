@@ -56,7 +56,7 @@ export default function Layout(){
           id="simple-menu"
           anchorEl={anchorEl}
           anchorOrigin={{vertical:'bottom',horizontal:'left'}}
-          getContentAnchorEl={null}
+          getcontentanchorel={null}
           keepMounted
           open={Boolean(anchorEl)}
           onClose={handleClose}>
