@@ -22,7 +22,7 @@ function TabPanel(props) {
     >
       {value === index && (
         <Box sx={{ p: 3 ,height:'100%'}}>
-          <Typography height={'100%'}>{children}</Typography>
+          <Typography component={'span'} height={'100%'}>{children}</Typography>
         </Box>
       )}
     </div>
@@ -56,7 +56,7 @@ const useStyle = makeStyles({
   }
 })
 
-export default function () {
+export default function MapPage() {
   const classes = useStyle();
   const [vehicles, setVehicles] = React.useState([])
   const [vehiclesCallback, setVehiclesCallback] = React.useState(null)
@@ -215,7 +215,7 @@ export default function () {
   const transformFormat = (positions) => {
     const res = []
     for (let p of positions) {
-      if (p[1] != 'null') {
+      if (p[1] !== 'null') {
         const LngLat = p[1].split(';')
         res.push({ longitude: parseFloat(LngLat[0]), latitude: parseFloat(LngLat[1]), timestamp: p[0] })
       }
@@ -247,7 +247,7 @@ export default function () {
       <Grid item xs={7.8} className={classes.container}>
         <Map selectVehicleRows={selectVehicleRows} selectGantryRows={selectGantryRows} />
       </Grid> */}
-      <Grid item xs={2.5} className={classes.container}>
+      <Grid item xs={3} className={classes.container}>
         <Box sx={{ width: '100%',height:'100%' }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider'}}>
             <Tabs value={value} onChange={handleChange} aria-label="basic tabs example" centered >
@@ -263,7 +263,7 @@ export default function () {
           </TabPanel>
         </Box>
       </Grid>
-      <Grid item xs={9.5} className={classes.container}>
+      <Grid item xs={9} className={classes.container}>
         <Map selectVehicleRows={selectVehicleRows} selectGantryRows={selectGantryRows} />
       </Grid>
     </Grid>

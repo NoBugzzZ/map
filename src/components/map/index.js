@@ -1,11 +1,11 @@
 import React from 'react'
-import { Map, Markers, InfoWindow, Polyline, Circle, Marker } from 'react-amap'
+import { Map, Markers, InfoWindow, Polyline } from 'react-amap'
 import { CarReq } from '../../requests';
 import Box from '@mui/material/Box';
 import Slider from '@mui/material/Slider';
 import Editor from "@monaco-editor/react";
 
-export default function ({ selectVehicleRows, selectGantryRows }) {
+export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
 
   const [map, setMap] = React.useState(null)
   const [infoWindow, setInfoWindow] = React.useState({ visible: false, position: { longitude: 120, latitude: 30 }, content: 'content', size: { width: 500, height: 150 }, offset: [2, -35] });

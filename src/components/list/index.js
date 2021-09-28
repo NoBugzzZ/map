@@ -26,9 +26,7 @@ const useStyle = makeStyles({
   }
 })
 
-export default function ({ title,rows, handleButtonClick, seeMore,checkedStatus,setCheckedStatus }) {
-  // console.log(rows)
-
+export default function CustomList({ title,rows, handleButtonClick, seeMore,checkedStatus,setCheckedStatus }) {
   const classes = useStyle();
 
   const [checked, setChecked] = React.useState([...checkedStatus.checked])
