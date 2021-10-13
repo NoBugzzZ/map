@@ -8,7 +8,7 @@ import moment from 'moment';
 
 export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
 
-  const [map, setMap] = React.useState(null)
+  // const [map, setMap] = React.useState(null)
   const [infoWindow, setInfoWindow] = React.useState({ visible: false, position: { longitude: 120, latitude: 30 }, content: 'content', size: { width: 500, height: 150 }, offset: [2, -35] });
 
   const [directions,setDirections] = React.useState([])
@@ -151,7 +151,6 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
                 if(len>=sPath&&len<=ePath){
                   const pp=tmc.polyline.split(';')[0].split(',')
                   return({position:{longitude:parseFloat(pp[0]),latitude:parseFloat(pp[1])},id:d.id,offset:{x:-7,y:-7}})
-                  break;
                 }
               }
               break;
@@ -233,7 +232,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
       center={center}
       events={{
         created: (ins) => {
-          setMap(ins)
+          // setMap(ins)
         },
         zoomchange: (e) => {
         }
