@@ -22,7 +22,7 @@ function TabPanel(props) {
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 3 ,height:'100%'}}>
+        <Box sx={{ p: 3, height: '100%' }}>
           <Typography component={'span'} height={'100%'}>{children}</Typography>
         </Box>
       )}
@@ -52,8 +52,8 @@ const useStyle = makeStyles({
     height: '92%',
     overflow: 'scroll'
   },
-  tabpanel:{
-    height:'88%'
+  tabpanel: {
+    height: '88%'
   }
 })
 
@@ -74,9 +74,9 @@ export default function MapPage() {
   const [moreGantries, setMoreGantries] = React.useState({ cursor: '', more: false })
 
   const [value, setValue] = React.useState(0);
-  
-  const [vehicleCheckedStatus,setVehicleCheckedStatus]=React.useState({checked:[],selectAll:false})
-  const [gantryCheckedStatus,setGantryCheckedStatus]=React.useState({checked:[],selectAll:false})
+
+  const [vehicleCheckedStatus, setVehicleCheckedStatus] = React.useState({ checked: [], selectAll: false })
+  const [gantryCheckedStatus, setGantryCheckedStatus] = React.useState({ checked: [], selectAll: false })
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -111,8 +111,7 @@ export default function MapPage() {
     CarReq.getGantries(cursor).then(data => {
       let { items, cursor: newCursor } = data
       const newRows = items.map(item => {
-        const { thingId, attributes: { longtitude: longitude, latitude } } = item
-        return { id: thingId.replace('ics.rodaki:gantry-', ''), position: { longitude, latitude }, ditto: item }
+        return { id: item.thingId.replace('ics.rodaki:gantry-', ''), position: { longitude:item.attributes['门架纬度'], latitude:item.attributes['门架经度'] }, ditto: item }
       })
       setGantriesCallback(newRows)
       if (newCursor) {
@@ -148,18 +147,40 @@ export default function MapPage() {
 
   React.useEffect(() => {
     if (message) {
-      console.log(message)
-      const { thingId, features: { location: { properties: { value } } } } = JSON.parse(message)
+      const msg=JSON.parse(message)
       let newselectVehicleRows = [...selectVehicleRows]
-      const currentIndex = newselectVehicleRows.findIndex(element => element.thingId === thingId)
-      const LngLat = value.split(';')
-      const position = { longitude: parseFloat(LngLat[0]), latitude: parseFloat(LngLat[1]), timestamp: moment().toISOString() }
-      newselectVehicleRows[currentIndex].position = position
-      newselectVehicleRows[currentIndex].path = [...newselectVehicleRows[currentIndex].path, position]
-      newselectVehicleRows[currentIndex].ditto.features.location.properties.value = value
+      const currentIndex = newselectVehicleRows.findIndex(element => element.thingId === msg.thingId)
+      var positions = getPositions(msg['features']['通过站点信息']['properties']['value'])
+      const currentPositionsIndex = positions.length - 1
+      newselectVehicleRows[currentIndex].position = currentPositionsIndex >= 0 ? positions[currentPositionsIndex] : {}
+      newselectVehicleRows[currentIndex].path = positions
+      const newValue=msg['features']['通过站点信息']['properties']['value']
+      if(typeof newValue==='undefined'){
+        delete newselectVehicleRows[currentIndex].ditto['features']['通过站点信息']['properties']['value']
+      }else{
+        newselectVehicleRows[currentIndex].ditto['features']['通过站点信息']['properties']['value'] = newValue
+      }
       setSelectVehicleRows(newselectVehicleRows)
+
+      // const { thingId, features: { location: { properties: { value } } } } = JSON.parse(message)
+      // let newselectVehicleRows = [...selectVehicleRows]
+      // const currentIndex = newselectVehicleRows.findIndex(element => element.thingId === thingId)
+      // const LngLat = value.split(';')
+      // const position = { longitude: parseFloat(LngLat[0]), latitude: parseFloat(LngLat[1]), timestamp: moment().toISOString() }
+      // newselectVehicleRows[currentIndex].position = position
+      // newselectVehicleRows[currentIndex].path = [...newselectVehicleRows[currentIndex].path, position]
+      // newselectVehicleRows[currentIndex].ditto.features.location.properties.value = value
+      // setSelectVehicleRows(newselectVehicleRows)
     }
   }, [message])
+
+  const getPositions = (value) => {
+    if (typeof value === 'undefined') return []
+    return value.map(e=>({
+      longitude:e.LATITUDE,
+      latitude:e.LONGITUDE
+    }))
+  }
 
   const handleVehicleButtonClick = (checked) => {
     const newselectVehicleRows = [...selectVehicleRows]
@@ -174,22 +195,36 @@ export default function MapPage() {
     if (newselectVehicleRows.length < checked.length) {
       for (const ckd of checked) {
         if (newselectVehicleRows.findIndex(element => element.id === ckd) === -1) {
-          CarReq.get(ckd).then(data => {
-            const positions = transformFormat(data)
-            const currentIndex = positions.length - 1
-            const row = vehicles.find(element => element.id === ckd)
-            setSelectVehicleRow({
-              id: ckd,
-              thingId: row.ditto.thingId,
-              position: currentIndex >= 0 ? positions[currentIndex] : {},
-              path: positions,
-              color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
-              sse: subcribe(row.ditto.thingId, (mes) => {
-                setMessage(mes)
-              }),
-              ditto: row.ditto
-            })
+          const row = vehicles.find(element => element.id === ckd)
+          var positions = getPositions(row.ditto['features']['通过站点信息']['properties']['value'])
+          const currentIndex = positions.length - 1
+          setSelectVehicleRow({
+            id: ckd,
+            thingId: row.ditto.thingId,
+            position: currentIndex >= 0 ? positions[currentIndex] : {},
+            path: positions,
+            color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
+            sse: subcribe(row.ditto.thingId, (mes) => {
+              setMessage(mes)
+            }),
+            ditto: row.ditto
           })
+          // CarReq.get(ckd).then(data => {
+          //   const positions = transformFormat(data)
+          //   const currentIndex = positions.length - 1
+          //   const row = vehicles.find(element => element.id === ckd)
+          //   setSelectVehicleRow({
+          //     id: ckd,
+          //     thingId: row.ditto.thingId,
+          //     position: currentIndex >= 0 ? positions[currentIndex] : {},
+          //     path: positions,
+          //     color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
+          //     sse: subcribe(row.ditto.thingId, (mes) => {
+          //       setMessage(mes)
+          //     }),
+          //     ditto: row.ditto
+          //   })
+          // })
         }
       }
     }
@@ -249,18 +284,18 @@ export default function MapPage() {
         <Map selectVehicleRows={selectVehicleRows} selectGantryRows={selectGantryRows} />
       </Grid> */}
       <Grid item xs={3} className={classes.container}>
-        <Box sx={{ width: '100%',height:'100%' }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider'}}>
+        <Box sx={{ width: '100%', height: '100%' }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={value} onChange={handleChange} aria-label="basic tabs example" centered >
               <Tab label="车辆" {...a11yProps(0)} />
               <Tab label="门架" {...a11yProps(1)} />
             </Tabs>
           </Box>
           <TabPanel value={value} index={0} className={classes.tabpanel}>
-            <List title='全选' rows={vehicles} handleButtonClick={handleVehicleButtonClick} seeMore={vehicleSeeMore} checkedStatus={vehicleCheckedStatus} setCheckedStatus={setVehicleCheckedStatus}/>
+            <List title='全选' rows={vehicles} handleButtonClick={handleVehicleButtonClick} seeMore={vehicleSeeMore} checkedStatus={vehicleCheckedStatus} setCheckedStatus={setVehicleCheckedStatus} />
           </TabPanel>
           <TabPanel value={value} index={1} className={classes.tabpanel}>
-            <List title='全选' rows={gantries} handleButtonClick={handleGantryButtonClick} seeMore={gantrySeeMore} checkedStatus={gantryCheckedStatus} setCheckedStatus={setGantryCheckedStatus}/>
+            <List title='全选' rows={gantries} handleButtonClick={handleGantryButtonClick} seeMore={gantrySeeMore} checkedStatus={gantryCheckedStatus} setCheckedStatus={setGantryCheckedStatus} />
           </TabPanel>
         </Box>
       </Grid>

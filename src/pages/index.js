@@ -1,4 +1,5 @@
 import Map from "./Map";
-import Home from "./Home";
+import HomePage from "./Home";
+import NotFoundPage from './NotFoundPage'
 
-export {Map,Home}
+export {Map,HomePage,NotFoundPage}

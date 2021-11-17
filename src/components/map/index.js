@@ -24,6 +24,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
   const [center,setCenter]=React.useState({longitude:120,latitude:37})
 
   React.useEffect(()=>{
+    setDirections([])
     if(selectVehicleRows){
       const newDirections=[...directions]
       for(const dir of directions){
@@ -295,7 +296,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
       >
       </Markers>
 
-      {directions.length > 0 ? directions.map(dir => {
+      {directions.length >= 0 ? directions.map(dir => {
         let path = []
         for (const i in dir.direction) {
           path = [...path, ...dir.direction[i]]

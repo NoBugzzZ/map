@@ -6,29 +6,24 @@ import MenuIcon from '@material-ui/icons/Menu';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import { makeStyles } from '@material-ui/styles';
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route,
-  Link
-} from "react-router-dom";
-import {Home,Map} from './pages'
+import Route from './Route';
+import { navigate } from 'hookrouter';
 
 
 const useStyle = makeStyles({
-  appbar:{
-    height:'8%',
-    marginBottom:'5px'
+  appbar: {
+    height: '8%',
+    marginBottom: '5px'
   },
-  container:{
-    height:'90%'
+  container: {
+    height: '90%'
   },
-  link:{
+  link: {
     'text-decoration': 'blink'
   }
 })
 
-export default function Layout(){
+export default function Layout() {
   const classes = useStyle();
   const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -40,13 +35,13 @@ export default function Layout(){
     setAnchorEl(null)
   };
 
-  return(
-    <Router>
+  return (
+    <>
       <div className={classes.appbar}>
         <AppBar>
           <Toolbar>
-            <IconButton 
-              color="inherit" 
+            <IconButton
+              color="inherit"
               onClick={handleClick}>
               <MenuIcon />
             </IconButton>
@@ -55,26 +50,25 @@ export default function Layout(){
         <Menu
           id="simple-menu"
           anchorEl={anchorEl}
-          anchorOrigin={{vertical:'bottom',horizontal:'left'}}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
           getcontentanchorel={null}
           keepMounted
           open={Boolean(anchorEl)}
-          onClose={handleClose}>
-            <MenuItem onClick={handleClose}><Link className={classes.link} to="/">home</Link></MenuItem>
-            <MenuItem onClick={handleClose}><Link className={classes.link} to="/map">map</Link></MenuItem>
+          onClose={handleClose}
+        >
+          <MenuItem onClick={()=>{
+            navigate('/')
+            handleClose()
+          }}>home</MenuItem>
+          <MenuItem onClick={()=>{
+            navigate('/map')
+            handleClose()
+          }}>map</MenuItem>
         </Menu>
       </div>
       <div className={classes.container}>
-        <Switch>
-          <Route exact path="/">
-            <Home />
-          </Route>
-          <Route exact path="/map">
-            <Map />
-          </Route>
-        </Switch>
+        <Route/>
       </div>
-    </Router>
-
+    </>
   )
 }
