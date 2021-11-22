@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const backendApi = 'http://localhost:10086/apis/ListHistoricalLocation'
-const dittoApi='http://localhost:8080/'
+const dittoApi=process.env.REACT_APP_DITTO_API_URL
 
 export async function get(id) {
   let body = new FormData();
