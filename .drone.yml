@@ -41,6 +41,9 @@ steps:
 
   - name: build
     image: node:16
+    environment:
+      BASE_URL:
+        from_secret: prod_base_url
     commands:
       - export REACT_APP_DITTO_API_URL=http://$${BASE_URL}:34080/
       # TODO: Remove all warnings
