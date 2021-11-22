@@ -1,22 +1,22 @@
 import axios from "axios";
 
-const backendApi = 'http://localhost:10086/apis/ListHistoricalLocation'
+// const backendApi = 'http://localhost:10086/apis/ListHistoricalLocation'
 const dittoApi=process.env.REACT_APP_DITTO_API_URL
 
-export async function get(id) {
-  let body = new FormData();
-  body.append('id', id)
-  body.append('startTime', '2020-06-16T13:02:00')
-  const { data } = await axios.request({
-    url: backendApi,
-    data: body,
-    method: 'POST',
-  })
-  return data
-}
+// export async function get(id) {
+//   let body = new FormData();
+//   body.append('id', id)
+//   body.append('startTime', '2020-06-16T13:02:00')
+//   const { data } = await axios.request({
+//     url: backendApi,
+//     data: body,
+//     method: 'POST',
+//   })
+//   return data
+// }
 export async function getVehicles(cursor) {
   var url = dittoApi+'api/2/search/things?filter=eq(definition,"ics.rodaki:vehicle:1.0")&option=size(200)'
-  if (cursor) {
+  if (cursor!=='') {
     url += ',cursor(' + cursor + ')'
   }
   const { data } = await axios.request({

@@ -8,7 +8,6 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import moment from 'moment';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -93,6 +92,9 @@ export default function MapPage() {
 
   const getVehicles = (cursor) => {
     CarReq.getVehicles(cursor).then(data => {
+      if(cursor!==''){
+        alert('加载成功')
+      }
       const { items, cursor: newCursor } = data
       const newRows = items.map(item => {
         const { thingId } = item
@@ -109,9 +111,12 @@ export default function MapPage() {
 
   const getGantries = (cursor) => {
     CarReq.getGantries(cursor).then(data => {
+      if(cursor!==''){
+        alert('加载成功')
+      }
       let { items, cursor: newCursor } = data
       const newRows = items.map(item => {
-        return { id: item.thingId.replace('ics.rodaki:gantry-', ''), position: { longitude:item.attributes['门架纬度'], latitude:item.attributes['门架经度'] }, ditto: item }
+        return { id: item.thingId.replace('ics.rodaki:gantry-', ''), position: { longitude: item.attributes['门架经度'], latitude: item.attributes['门架纬度'] }, ditto: item }
       })
       setGantriesCallback(newRows)
       if (newCursor) {
@@ -147,17 +152,17 @@ export default function MapPage() {
 
   React.useEffect(() => {
     if (message) {
-      const msg=JSON.parse(message)
+      const msg = JSON.parse(message)
       let newselectVehicleRows = [...selectVehicleRows]
       const currentIndex = newselectVehicleRows.findIndex(element => element.thingId === msg.thingId)
       var positions = getPositions(msg['features']['通过站点信息']['properties']['value'])
       const currentPositionsIndex = positions.length - 1
       newselectVehicleRows[currentIndex].position = currentPositionsIndex >= 0 ? positions[currentPositionsIndex] : {}
       newselectVehicleRows[currentIndex].path = positions
-      const newValue=msg['features']['通过站点信息']['properties']['value']
-      if(typeof newValue==='undefined'){
+      const newValue = msg['features']['通过站点信息']['properties']['value']
+      if (typeof newValue === 'undefined') {
         delete newselectVehicleRows[currentIndex].ditto['features']['通过站点信息']['properties']['value']
-      }else{
+      } else {
         newselectVehicleRows[currentIndex].ditto['features']['通过站点信息']['properties']['value'] = newValue
       }
       setSelectVehicleRows(newselectVehicleRows)
@@ -176,10 +181,15 @@ export default function MapPage() {
 
   const getPositions = (value) => {
     if (typeof value === 'undefined') return []
-    return value.map(e=>({
-      longitude:e.LATITUDE,
-      latitude:e.LONGITUDE
-    }))
+    return value.map(e => {
+      const { LONGITUDE, LATITUDE, TIME: timestamp, ...context } = e
+      return {
+        longitude: LONGITUDE,
+        latitude: LATITUDE,
+        timestamp,
+        context
+      }
+    })
   }
 
   const handleVehicleButtonClick = (checked) => {
@@ -248,16 +258,16 @@ export default function MapPage() {
     setSelectGantryRows(newselectGantryRows)
   }
 
-  const transformFormat = (positions) => {
-    const res = []
-    for (let p of positions) {
-      if (p[1] !== 'null') {
-        const LngLat = p[1].split(';')
-        res.push({ longitude: parseFloat(LngLat[0]), latitude: parseFloat(LngLat[1]), timestamp: p[0] })
-      }
-    }
-    return res
-  }
+  // const transformFormat = (positions) => {
+  //   const res = []
+  //   for (let p of positions) {
+  //     if (p[1] !== 'null') {
+  //       const LngLat = p[1].split(';')
+  //       res.push({ longitude: parseFloat(LngLat[0]), latitude: parseFloat(LngLat[1]), timestamp: p[0] })
+  //     }
+  //   }
+  //   return res
+  // }
 
   const vehicleSeeMore = () => {
     if (moreVehicles.more) {
