@@ -12,11 +12,12 @@ import { navigate } from 'hookrouter';
 
 const useStyle = makeStyles({
   appbar: {
-    height: '8%',
+    height: '64px',
     marginBottom: '5px'
   },
   container: {
-    height: '90%'
+    height: '90%',
+    margin:'10px'
   },
   link: {
     'text-decoration': 'blink'
