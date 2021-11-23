@@ -3,10 +3,17 @@ type: kubernetes
 name: default
 
 trigger:
+  branch:
+    - master
+    - main
   event:
-    - tag
+    - push
+    - pull_request
     - promote
-
+ 
+clone:
+  depth: 4
+  
 steps:
   # see http://plugins.drone.io/meltwater/drone-cache/
   - name: restore-cache
@@ -45,7 +52,7 @@ steps:
       BASE_URL:
         from_secret: prod_base_url
     commands:
-      - export REACT_APP_DITTO_API_URL=http://$${BASE_URL}:34080/
+      - export REACT_APP_DITTO_API_URL=http://ditto.$${BASE_URL}/
       # TODO: Remove all warnings
       - CI=false npm run build
 
