@@ -33,21 +33,16 @@ steps:
       restore: true
       cache_key: '{{ .Repo.Name }}_{{ checksum "package-lock.json" }}_{{ arch }}_{{ os }}'
       mount:
-        - /tmp/.npm-cache
+        - .tmp/.npm-cache
     volumes:
       - name: cache
         path: /tmp/cache
-      - name: npm-cache
-        path: /tmp/.npm-cache
 
   - name: deps
     image: node:16
     commands:
-      - 'npm config set cache /tmp/.npm-cache --global'
+      - 'npm config set cache .tmp/.npm-cache --global'
       - 'npm --registry https://registry.npm.taobao.org install'
-    volumes:
-      - name: npm-cache
-        path: /tmp/.npm-cache
 
   - name: rebuild-cache
     image: meltwater/drone-cache
@@ -56,12 +51,10 @@ steps:
       rebuild: true
       cache_key: '{{ .Repo.Name }}_{{ checksum "package-lock.json" }}_{{ arch }}_{{ os }}'
       mount:
-        - /tmp/.npm-cache
+        - .tmp/.npm-cache
     volumes:
       - name: cache
         path: /tmp/cache
-      - name: npm-cache
-        path: /tmp/.npm-cache
 
   - name: build
     image: node:16
@@ -123,5 +116,3 @@ volumes:
   - name: cache
     host:
       path: /tmp/drone-volumes/cache
-  - name: npm-cache
-    temp: {}
