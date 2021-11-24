@@ -8,13 +8,23 @@ trigger:
     - main
   event:
     - push
-    - pull_request
     - promote
- 
+
 clone:
-  depth: 4
-  
+  disable: true
+
 steps:
+  - name: git-clone
+    image: alpine/git
+    environment:
+      HTTP_PROXY:
+        from_secret: prod_http_proxy
+      HTTPS_PROXY:
+        from_secret: prod_https_proxy
+    commands:
+      - git clone ${DRONE_GIT_HTTP_URL} --depth 4 .
+      - git checkout ${DRONE_COMMIT}
+
   # see http://plugins.drone.io/meltwater/drone-cache/
   - name: restore-cache
     image: meltwater/drone-cache
@@ -23,16 +33,21 @@ steps:
       restore: true
       cache_key: '{{ .Repo.Name }}_{{ checksum "package-lock.json" }}_{{ arch }}_{{ os }}'
       mount:
-        - .npm-cache
+        - /tmp/.npm-cache
     volumes:
       - name: cache
         path: /tmp/cache
+      - name: npm-cache
+        path: /tmp/.npm-cache
 
   - name: deps
     image: node:16
     commands:
-      - 'npm config set cache ./.npm-cache --global'
+      - 'npm config set cache /tmp/.npm-cache --global'
       - 'npm --registry https://registry.npm.taobao.org install'
+    volumes:
+      - name: npm-cache
+        path: /tmp/.npm-cache
 
   - name: rebuild-cache
     image: meltwater/drone-cache
@@ -41,18 +56,22 @@ steps:
       rebuild: true
       cache_key: '{{ .Repo.Name }}_{{ checksum "package-lock.json" }}_{{ arch }}_{{ os }}'
       mount:
-        - .npm-cache
+        - /tmp/.npm-cache
     volumes:
       - name: cache
         path: /tmp/cache
+      - name: npm-cache
+        path: /tmp/.npm-cache
 
   - name: build
     image: node:16
     environment:
       BASE_URL:
         from_secret: prod_base_url
+      BASE_URL_WITH_PORT:
+        from_secret: prod_base_url_with_port
     commands:
-      - export REACT_APP_DITTO_API_URL=http://ditto.$${BASE_URL}/
+      - export REACT_APP_DITTO_API_URL=http://ditto.$${BASE_URL_WITH_PORT}/
       # TODO: Remove all warnings
       - CI=false npm run build
 
@@ -63,6 +82,8 @@ steps:
       insecure: true
       repo: 192.168.10.101:5000/ditto-expressway-map
       registry: 192.168.10.101:5000
+      mirror:
+        from_secret: prod_docker_registry_mirror
       tags:
         - latest
         - ${DRONE_COMMIT_SHA:0:8}
@@ -102,3 +123,5 @@ volumes:
   - name: cache
     host:
       path: /tmp/drone-volumes/cache
+  - name: npm-cache
+    temp: {}
