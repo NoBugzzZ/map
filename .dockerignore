@@ -1,4 +1,4 @@
-.npm-cache
+.tmp
 node_modules
 Makefile
 ci/helm
