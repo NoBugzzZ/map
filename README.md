@@ -6,7 +6,7 @@ npm v6
 npm install
 
 ## 运行
-npm start
+REACT_APP_DITTO_API_URL=${url} npm start
 
 ## 设置端口
 .env文件设置PORT
