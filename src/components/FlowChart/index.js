@@ -16,7 +16,6 @@ export default function ({ infoWindow }) {
           }
         })
         setData(newData)
-        console.log(newData)
       }
     }
   }, [infoWindow])

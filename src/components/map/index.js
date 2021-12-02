@@ -19,8 +19,8 @@ const useStyle=makeStyles({
 })
 
 export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
+
   const classes=useStyle()
-  // const [map, setMap] = React.useState(null)
   const [infoWindow, setInfoWindow] = React.useState({ visible: false, position: { longitude: 120, latitude: 30 }, content: 'content', size: { width: 500, height: 150 }, offset: [2, -35], type: 0 });
 
   const [directions, setDirections] = React.useState([])
@@ -263,7 +263,6 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
         </Grid>
       )
     } else if (type === 2) {
-      console.log(infoWindow)
       return (
         <Grid container spacing={0} className={classes.gridcontainer}>
           <Grid item xs={6}>
@@ -319,7 +318,6 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           click: (e, marker) => {
             const extData = marker.getExtData()
             const { lng: longitude, lat: latitude } = marker.getPosition()
-            console.log(extData)
             setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: JSON.stringify(extData.ditto, null, 2), size: { width: 1000, height: 500 }, offset: [0, -35], type: 2 })
           },
           mouseover: (e, marker) => {

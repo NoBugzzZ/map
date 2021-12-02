@@ -8,6 +8,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import moment from 'moment';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -92,13 +93,16 @@ export default function MapPage() {
 
   const getVehicles = (cursor) => {
     CarReq.getVehicles(cursor).then(data => {
-      if(cursor!==''){
+      if (cursor !== '') {
         alert('加载成功')
       }
       const { items, cursor: newCursor } = data
       const newRows = items.map(item => {
         const { thingId } = item
-        return { id: thingId.replace('ics.rodaki:vehicle-', ''), ditto: item }
+        return {
+          id: thingId.replace('ics.rodaki:vehicle-', ''),
+          ditto: item
+        }
       })
       setVehiclesCallback(newRows)
       if (newCursor) {
@@ -111,12 +115,19 @@ export default function MapPage() {
 
   const getGantries = (cursor) => {
     CarReq.getGantries(cursor).then(data => {
-      if(cursor!==''){
+      if (cursor !== '') {
         alert('加载成功')
       }
       let { items, cursor: newCursor } = data
       const newRows = items.map(item => {
-        return { id: item.thingId.replace('ics.rodaki:gantry-', ''), position: { longitude: item.attributes['门架经度'], latitude: item.attributes['门架纬度'] }, ditto: item }
+        return {
+          id: item.thingId.replace('ics.rodaki:gantry-', ''),
+          position: {
+            longitude: parseFloat(item.attributes['门架经度']['$numberDecimal']),
+            latitude: parseFloat(item.attributes['门架纬度']['$numberDecimal'])
+          },
+          ditto: item
+        }
       })
       setGantriesCallback(newRows)
       if (newCursor) {
@@ -166,28 +177,18 @@ export default function MapPage() {
         newselectVehicleRows[currentIndex].ditto['features']['通过站点信息']['properties']['value'] = newValue
       }
       setSelectVehicleRows(newselectVehicleRows)
-
-      // const { thingId, features: { location: { properties: { value } } } } = JSON.parse(message)
-      // let newselectVehicleRows = [...selectVehicleRows]
-      // const currentIndex = newselectVehicleRows.findIndex(element => element.thingId === thingId)
-      // const LngLat = value.split(';')
-      // const position = { longitude: parseFloat(LngLat[0]), latitude: parseFloat(LngLat[1]), timestamp: moment().toISOString() }
-      // newselectVehicleRows[currentIndex].position = position
-      // newselectVehicleRows[currentIndex].path = [...newselectVehicleRows[currentIndex].path, position]
-      // newselectVehicleRows[currentIndex].ditto.features.location.properties.value = value
-      // setSelectVehicleRows(newselectVehicleRows)
     }
   }, [message])
 
   const getPositions = (value) => {
     if (typeof value === 'undefined') return []
     return value.map(e => {
-      const { LONGITUDE, LATITUDE, TIME: timestamp, ...context } = e
+      const { LONGITUDE: { $numberDecimal: longitude }, LATITUDE: { $numberDecimal: latitude }, TIME: timestamp, ...context } = e
       return {
-        longitude: LONGITUDE,
-        latitude: LATITUDE,
-        timestamp,
-        context
+        longitude: parseFloat(longitude),
+        latitude: parseFloat(latitude),
+        timestamp: moment.unix(timestamp/1000).toISOString(),
+        context,
       }
     })
   }
@@ -219,22 +220,6 @@ export default function MapPage() {
             }),
             ditto: row.ditto
           })
-          // CarReq.get(ckd).then(data => {
-          //   const positions = transformFormat(data)
-          //   const currentIndex = positions.length - 1
-          //   const row = vehicles.find(element => element.id === ckd)
-          //   setSelectVehicleRow({
-          //     id: ckd,
-          //     thingId: row.ditto.thingId,
-          //     position: currentIndex >= 0 ? positions[currentIndex] : {},
-          //     path: positions,
-          //     color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
-          //     sse: subcribe(row.ditto.thingId, (mes) => {
-          //       setMessage(mes)
-          //     }),
-          //     ditto: row.ditto
-          //   })
-          // })
         }
       }
     }
