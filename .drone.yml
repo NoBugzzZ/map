@@ -64,7 +64,7 @@ steps:
       BASE_URL_WITH_PORT:
         from_secret: prod_base_url_with_port
     commands:
-      - export REACT_APP_DITTO_API_URL=http://ditto.$${BASE_URL_WITH_PORT}/
+      - export REACT_APP_API_URL_BACKEND=http://expressway-map.$${BASE_URL_WITH_PORT}
       # TODO: Remove all warnings
       - CI=false npm run build
 
