@@ -161,17 +161,33 @@ export default function MapPage() {
     }
   }, [selectVehicleRow])
 
+  const isValidForLongitude = (longitude) => {
+    if (longitude <= 180 && longitude >= 0) return true
+    return false
+  }
+
+  const isValidForLatitude = (latitude) => {
+    if (latitude <= 90 && latitude >= 0) return true
+    return false
+  }
+
   const getPositions = (value) => {
     if (typeof value === 'undefined') return []
-    return value.map(e => {
-      const { LONGITUDE: { $numberDecimal: longitude }, LATITUDE: { $numberDecimal: latitude }, TIME: timestamp, ...context } = e
-      return {
-        longitude: parseFloat(longitude),
-        latitude: parseFloat(latitude),
-        timestamp: moment.unix(timestamp / 1000).toISOString(),
-        context,
+    const res = []
+    value.forEach((v) => {
+      let { LONGITUDE: { $numberDecimal: longitude }, LATITUDE: { $numberDecimal: latitude }, TIME: timestamp, ...context } = v
+      longitude = parseFloat(longitude)
+      latitude = parseFloat(latitude)
+      if (isValidForLatitude(latitude) && isValidForLongitude(longitude)) {
+        res.push({
+          longitude,
+          latitude,
+          timestamp: moment.unix(timestamp / 1000).toISOString(),
+          context,
+        })
       }
     })
+    return res
   }
 
   const handleVehicleButtonClick = (checked) => {
@@ -179,7 +195,6 @@ export default function MapPage() {
     for (const selectVehicleRow of selectVehicleRows) {
       if (checked.indexOf(selectVehicleRow.id) === -1) {
         const currentIndex = newselectVehicleRows.findIndex(element => element.id === selectVehicleRow.id)
-        selectVehicleRow.sse.close()
         newselectVehicleRows.splice(currentIndex, 1)
       }
     }
@@ -219,17 +234,6 @@ export default function MapPage() {
     }
     setSelectGantryRows(newselectGantryRows)
   }
-
-  // const transformFormat = (positions) => {
-  //   const res = []
-  //   for (let p of positions) {
-  //     if (p[1] !== 'null') {
-  //       const LngLat = p[1].split(';')
-  //       res.push({ longitude: parseFloat(LngLat[0]), latitude: parseFloat(LngLat[1]), timestamp: p[0] })
-  //     }
-  //   }
-  //   return res
-  // }
 
   const vehicleSeeMore = () => {
     if (moreVehicles.more) {

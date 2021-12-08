@@ -10,17 +10,17 @@ import FlowChart from '../FlowChart';
 import SpeedChart from '../SpeedChart';
 import { makeStyles } from '@mui/styles';
 
-const useStyle=makeStyles({
-  gridcontainer:{
+const useStyle = makeStyles({
+  gridcontainer: {
   },
-  griditem:{
-    padding:'20px',
+  griditem: {
+    padding: '20px',
   }
 })
 
 export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
   console.log(selectVehicleRows, selectGantryRows)
-  const classes=useStyle()
+  const classes = useStyle()
   const [infoWindow, setInfoWindow] = React.useState({ visible: false, position: { longitude: 120, latitude: 30 }, content: 'content', size: { width: 500, height: 150 }, offset: [2, -35], type: 0 });
 
   const [directions, setDirections] = React.useState([])
@@ -197,29 +197,33 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
 
   const getDirection = (context, origin, destination, index) => {
     CarReq.direction(origin, destination).then(data => {
+      let hasDirection = false
       if (data.status === '1') {
         let d = []
         const path = data.route.paths[0]
-        const { steps } = path
-        steps.forEach((stepValue, stepIndex) => {
-          const { polyline: stepPolyline } = stepValue
-          const stepLngLats = stepPolyline.split(';')
-          stepLngLats.forEach((stepLngLatValue) => {
-            const lnglat = stepLngLatValue.split(',')
-            d.push({ longitude: parseFloat(lnglat[0]), latitude: parseFloat(lnglat[1]) })
+        if (path) {
+          const { steps } = path
+          steps.forEach((stepValue, stepIndex) => {
+            const { polyline: stepPolyline } = stepValue
+            const stepLngLats = stepPolyline.split(';')
+            stepLngLats.forEach((stepLngLatValue) => {
+              const lnglat = stepLngLatValue.split(',')
+              d.push({ longitude: parseFloat(lnglat[0]), latitude: parseFloat(lnglat[1]) })
+            })
           })
-
-        })
-        setDirection({
-          ...context,
-          direction: {
-            [index]: d
-          },
-          amap: {
-            [index]: path
-          }
-        })
-      } else {
+          setDirection({
+            ...context,
+            direction: {
+              [index]: d
+            },
+            amap: {
+              [index]: path
+            }
+          })
+          hasDirection = true
+        }
+      }
+      if (!hasDirection) {
         setDirection({
           ...context,
           direction: {
@@ -241,7 +245,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
     if (type === 0) {
       return (
         <Editor
-          height={infoWindow.size.height-20}
+          height={infoWindow.size.height - 20}
           language="json"
           value={infoWindow.content}
         />
@@ -251,7 +255,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
         <Grid container spacing={0} className={classes.gridcontainer}>
           <Grid item xs={6}>
             <Editor
-              height={infoWindow.size.height-20}
+              height={infoWindow.size.height - 20}
               language="json"
               value={infoWindow.content}
             />
@@ -266,7 +270,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
         <Grid container spacing={0} className={classes.gridcontainer}>
           <Grid item xs={6}>
             <Editor
-              height={infoWindow.size.height-20}
+              height={infoWindow.size.height - 20}
               language="json"
               value={infoWindow.content}
             />
