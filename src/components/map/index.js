@@ -141,6 +141,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
   }, [selectGantryRows])
 
   const getPredictPosition = (t, d) => {
+    console.log(t, d)
     if (Object.size(d.direction) > 0) {
       const { path } = d
       for (let i = 0; i < path.length - 1; i++) {
@@ -151,7 +152,9 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           const len = Math.floor(v * (t - stime))
           let sPath = 0
           let ePath = 0
-          for (let step of d.amap[i].steps) {
+          const {steps} =d.amap[i]
+          if(!steps||typeof(steps)==='undefined') return null
+          for (let step of steps) {
             sPath = ePath
             ePath += parseInt(step.distance)
             if (len >= sPath && len <= ePath) {
