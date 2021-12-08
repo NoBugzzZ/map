@@ -8,9 +8,9 @@ npm install
 ```
 ## 运行
 ```
-REACT_APP_DITTO_API_URL=${url} npm start
+REACT_APP_API_URL_BACKEND=${url} npm start
 ```
-${url}需要替换成ditto的地址
+${url}需要替换成mapbackend的地址
 
 ## 设置端口
 .env文件设置PORT
