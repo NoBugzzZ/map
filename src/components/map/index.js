@@ -19,7 +19,7 @@ const useStyle=makeStyles({
 })
 
 export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
-
+  console.log(selectVehicleRows, selectGantryRows)
   const classes=useStyle()
   const [infoWindow, setInfoWindow] = React.useState({ visible: false, position: { longitude: 120, latitude: 30 }, content: 'content', size: { width: 500, height: 150 }, offset: [2, -35], type: 0 });
 
@@ -90,7 +90,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
         const maxIndex = sr.path.length - 1
         for (let i = 0; i < maxIndex; i++) {
           const { longitude, latitude, context } = sr.path[i]
-          newHistoryPositions.push({ id: sr.thingId, position: { longitude, latitude }, context, offset: { x: -7, y: -7 } })
+          newHistoryPositions.push({ id: sr.id, position: { longitude, latitude }, context, offset: { x: -7, y: -7 } })
         }
       }
 
@@ -105,7 +105,6 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
 
     const lastIndex = selectVehicleRows.length - 1
     if (lastIndex >= 0) {
-      // console.log(selectVehicleRows[lastIndex])
       const { position } = selectVehicleRows[lastIndex]
       setZoom(8)
       setCenter(position)
@@ -318,7 +317,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           click: (e, marker) => {
             const extData = marker.getExtData()
             const { lng: longitude, lat: latitude } = marker.getPosition()
-            setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: JSON.stringify(extData.ditto, null, 2), size: { width: 1000, height: 500 }, offset: [0, -35], type: 2 })
+            setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: JSON.stringify(extData.info, null, 2), size: { width: 1000, height: 500 }, offset: [0, -35], type: 2 })
           },
           mouseover: (e, marker) => {
             // const extData = marker.getExtData()
@@ -428,7 +427,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           click: (e, marker) => {
             const extData = marker.getExtData()
             const { position: { longitude, latitude } } = extData
-            setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: JSON.stringify(extData.ditto, null, 2), size: { width: 1000, height: 500 }, offset: [0, -35], type: 1 })
+            setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: JSON.stringify(extData.info, null, 2), size: { width: 1000, height: 500 }, offset: [0, -35], type: 1 })
           }
         }}
         render={extData => {

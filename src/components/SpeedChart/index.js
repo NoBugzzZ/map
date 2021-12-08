@@ -8,7 +8,7 @@ export default function ({ infoWindow }) {
   useEffect(() => {
     if (infoWindow.visible) {
       const content = JSON.parse(infoWindow.content)
-      const { value } = content['features']['车辆当前通行速度列表']['properties']
+      const value = content['CURRENTSPEEDLIST']
       if (value) {
         const newData=value.map(v=>{
           return{

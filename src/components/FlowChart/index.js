@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LineChart,XAxis,Tooltip,CartesianGrid,Line,YAxis } from 'recharts';
+import { LineChart, XAxis, Tooltip, CartesianGrid, Line, YAxis } from 'recharts';
 
 export default function ({ infoWindow }) {
 
@@ -8,11 +8,11 @@ export default function ({ infoWindow }) {
   useEffect(() => {
     if (infoWindow.visible) {
       const content = JSON.parse(infoWindow.content)
-      const { value } = content['features']['门架历史车流量']['properties']
+      const value = content['TRAFFICFLOWHISTORY']
       if (value) {
-        const newData=value.map(v=>{
-          return{
-            flow:v
+        const newData = value.map(v => {
+          return {
+            flow: v
           }
         })
         setData(newData)

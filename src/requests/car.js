@@ -1,46 +1,27 @@
 import axios from "axios";
+import { API_URL } from "../config";
 
-// const backendApi = 'http://localhost:10086/apis/ListHistoricalLocation'
-const dittoApi=process.env.REACT_APP_DITTO_API_URL
+const backendApi=API_URL.BACKEND
 
-// export async function get(id) {
-//   let body = new FormData();
-//   body.append('id', id)
-//   body.append('startTime', '2020-06-16T13:02:00')
-//   const { data } = await axios.request({
-//     url: backendApi,
-//     data: body,
-//     method: 'POST',
-//   })
-//   return data
-// }
 export async function getVehicles(cursor) {
-  var url = dittoApi+'api/2/search/things?filter=eq(definition,"ics.rodaki:vehicle:1.0")&option=size(200)'
+  var url = backendApi+'/api/vehicle'
   if (cursor!=='') {
-    url += ',cursor(' + cursor + ')'
+    url += `?size=${cursor}`
   }
   const { data } = await axios.request({
     url,
-    method: 'GET',
-    auth: {
-      username: 'ditto',
-      password: 'ditto'
-    }
+    method: 'GET'
   })
   return data
 }
 export async function getGantries(cursor) {
-  var url =  dittoApi+'api/2/search/things?filter=eq(definition,"ics.rodaki:gantry:1.0")&option=size(200)'
-  if (cursor) {
-    url += ',cursor(' + cursor + ')'
+  var url =  backendApi+'/api/gantry'
+  if (cursor!=='') {
+    url += `?size=${cursor}`
   }
   const { data } = await axios.request({
     url,
-    method: 'GET',
-    auth: {
-      username: 'ditto',
-      password: 'ditto'
-    }
+    method: 'GET'
   })
   return data
 }

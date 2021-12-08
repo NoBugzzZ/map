@@ -1,7 +1,7 @@
 import React from 'react'
 import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/styles';
-import { CarReq, subcribe } from '../requests';
+import { CarReq } from '../requests';
 import { List, Map } from '../components';
 import PropTypes from 'prop-types';
 import Tabs from '@mui/material/Tabs';
@@ -66,7 +66,6 @@ export default function MapPage() {
 
   const [selectVehicleRow, setSelectVehicleRow] = React.useState(null)
   const [selectVehicleRows, setSelectVehicleRows] = React.useState([])
-  const [message, setMessage] = React.useState(null)
 
   const [selectGantryRows, setSelectGantryRows] = React.useState([])
 
@@ -98,10 +97,10 @@ export default function MapPage() {
       }
       const { items, cursor: newCursor } = data
       const newRows = items.map(item => {
-        const { thingId } = item
+        const { _id } = item
         return {
-          id: thingId.replace('ics.rodaki:vehicle-', ''),
-          ditto: item
+          id: _id,
+          info: item
         }
       })
       setVehiclesCallback(newRows)
@@ -120,13 +119,14 @@ export default function MapPage() {
       }
       let { items, cursor: newCursor } = data
       const newRows = items.map(item => {
+        const { _id } = item
         return {
-          id: item.thingId.replace('ics.rodaki:gantry-', ''),
+          id: _id,
           position: {
-            longitude: parseFloat(item.attributes['门架经度']['$numberDecimal']),
-            latitude: parseFloat(item.attributes['门架纬度']['$numberDecimal'])
+            longitude: parseFloat(item['LONGITUDE']['$numberDecimal']),
+            latitude: parseFloat(item['LATITUDE']['$numberDecimal'])
           },
-          ditto: item
+          info: item
         }
       })
       setGantriesCallback(newRows)
@@ -161,25 +161,6 @@ export default function MapPage() {
     }
   }, [selectVehicleRow])
 
-  React.useEffect(() => {
-    if (message) {
-      const msg = JSON.parse(message)
-      let newselectVehicleRows = [...selectVehicleRows]
-      const currentIndex = newselectVehicleRows.findIndex(element => element.thingId === msg.thingId)
-      var positions = getPositions(msg['features']['通过站点信息']['properties']['value'])
-      const currentPositionsIndex = positions.length - 1
-      newselectVehicleRows[currentIndex].position = currentPositionsIndex >= 0 ? positions[currentPositionsIndex] : {}
-      newselectVehicleRows[currentIndex].path = positions
-      const newValue = msg['features']['通过站点信息']['properties']['value']
-      if (typeof newValue === 'undefined') {
-        delete newselectVehicleRows[currentIndex].ditto['features']['通过站点信息']['properties']['value']
-      } else {
-        newselectVehicleRows[currentIndex].ditto['features']['通过站点信息']['properties']['value'] = newValue
-      }
-      setSelectVehicleRows(newselectVehicleRows)
-    }
-  }, [message])
-
   const getPositions = (value) => {
     if (typeof value === 'undefined') return []
     return value.map(e => {
@@ -187,7 +168,7 @@ export default function MapPage() {
       return {
         longitude: parseFloat(longitude),
         latitude: parseFloat(latitude),
-        timestamp: moment.unix(timestamp/1000).toISOString(),
+        timestamp: moment.unix(timestamp / 1000).toISOString(),
         context,
       }
     })
@@ -207,18 +188,14 @@ export default function MapPage() {
       for (const ckd of checked) {
         if (newselectVehicleRows.findIndex(element => element.id === ckd) === -1) {
           const row = vehicles.find(element => element.id === ckd)
-          var positions = getPositions(row.ditto['features']['通过站点信息']['properties']['value'])
+          var positions = getPositions(row.info['PASSSTATION'])
           const currentIndex = positions.length - 1
           setSelectVehicleRow({
             id: ckd,
-            thingId: row.ditto.thingId,
             position: currentIndex >= 0 ? positions[currentIndex] : {},
             path: positions,
             color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
-            sse: subcribe(row.ditto.thingId, (mes) => {
-              setMessage(mes)
-            }),
-            ditto: row.ditto
+            info: row.info
           })
         }
       }
