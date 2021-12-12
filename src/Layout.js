@@ -16,7 +16,7 @@ const useStyle = makeStyles({
     marginBottom: '5px'
   },
   container: {
-    height: '90%',
+    height: '92%',
     margin:'10px'
   },
   link: {

@@ -19,7 +19,7 @@ const useStyle = makeStyles({
 })
 
 export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
-  console.log(selectVehicleRows, selectGantryRows)
+
   const classes = useStyle()
   const [infoWindow, setInfoWindow] = React.useState({ visible: false, position: { longitude: 120, latitude: 30 }, content: 'content', size: { width: 500, height: 150 }, offset: [2, -35], type: 0 });
 
@@ -141,7 +141,6 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
   }, [selectGantryRows])
 
   const getPredictPosition = (t, d) => {
-    console.log(t, d)
     if (Object.size(d.direction) > 0) {
       const { path } = d
       for (let i = 0; i < path.length - 1; i++) {
@@ -384,7 +383,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           return (
             <div
               style={{
-                background: `url(https://img.icons8.com/office/30/000000/overhead-crane.png`,
+                background: `url(https://img.icons8.com/ios-filled/50/000000/overhead-crane.png`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
@@ -441,7 +440,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           return (
             <div
               style={{
-                background: `url(https://img.icons8.com/office/30/000000/overhead-crane.png`,
+                background: `url(https://img.icons8.com/ios-filled/50/000000/overhead-crane.png`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',

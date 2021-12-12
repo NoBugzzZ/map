@@ -6,36 +6,39 @@ import ListItem from '@material-ui/core/ListItem';
 import Checkbox from '@material-ui/core/Checkbox';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import AddIcon from '@material-ui/icons/Add';
 import { makeStyles } from '@material-ui/styles';
+import Pagination from '@mui/material/Pagination'
 
 const useStyle = makeStyles({
-  container:{
-    height:'100%',
+  container: {
+    height: '100%',
     // boxShadow:'2px 2px 2px grey',
-    borderRadius:'5px'
+    borderRadius: '5px',
+    overflow: 'scroll',
   },
   list: {
     height: '87%',
-    overflow: 'scroll',
-    marginBottom:'10px'
+    marginBottom: '10px'
   },
-  button:{
+  button: {
     width: '100%'
+  },
+  title: {
+    margin: '10px',
+    fontSize: '1.3rem'
   }
 })
 
-export default function CustomList({ title,rows, handleButtonClick, seeMore,checkedStatus,setCheckedStatus }) {
+export default function CustomList({ title, rows, handleButtonClick, checkedStatus, setCheckedStatus, pageCount, handlePageChange }) {
   const classes = useStyle();
 
-  const [checked, setChecked] = React.useState([...checkedStatus.checked])
-  const [selectAll, setSelectAll] = React.useState(checkedStatus.selectAll)
+  const [checked, setChecked] = React.useState([])
 
-  React.useEffect(()=>{
-    setCheckedStatus({checked:[...checked],selectAll})
-  },[checked,selectAll])
-  
+  React.useEffect(() => {
+    const { checked: newChecked } = checkedStatus
+    setChecked(newChecked)
+  }, [checkedStatus])
+
   const handleListItemClick = (row) => {
     const currentTarget = checked.indexOf(row.id)
     const newChecked = [...checked]
@@ -44,30 +47,20 @@ export default function CustomList({ title,rows, handleButtonClick, seeMore,chec
     } else {
       newChecked.splice(currentTarget, 1)
     }
-    setChecked(newChecked)
+    setCheckedStatus({checked:newChecked})
   }
 
-  const handleSelectAll = () => {
-    if (selectAll) {
-      setChecked([])
-    } else {
-      const newChecked = []
-      for (let row of rows) {
-        newChecked.push(row.id)
-      }
-      setChecked(newChecked)
-    }
-    setSelectAll(!selectAll)
-  }
+
 
   return (
     <div className={classes.container}>
       <Grid container>
         <Grid item xs={6}>
-          <FormControlLabel
+          {/* <FormControlLabel
             control={<Checkbox checked={selectAll} onClick={handleSelectAll} />}
             label={title}
-          />
+          /> */}
+          <span className={classes.title}>{title}</span>
         </Grid>
         <Grid item xs={6}>
           <Button
@@ -80,7 +73,7 @@ export default function CustomList({ title,rows, handleButtonClick, seeMore,chec
         </Grid>
       </Grid>
       {/* <div className={classes.list}> */}
-      <List dense className={classes.list}>
+      <List dense>
         {rows.map(row => {
           return (
             <ListItem key={row.id} button onClick={() => handleListItemClick(row)}>
@@ -94,15 +87,13 @@ export default function CustomList({ title,rows, handleButtonClick, seeMore,chec
           )
         })}
       </List>
-      {/* </div> */}
-      <Button
-        className={classes.button}
-        variant="contained"
+      <Pagination
+        count={pageCount}
         color="primary"
-        onClick={() => seeMore()}
-      >
-        <AddIcon fontSize="medium" />
-      </Button>
+        onChange={(e, v) => {
+          handlePageChange(v)
+        }}
+      />
     </div>
   )
 }

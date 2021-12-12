@@ -1,5 +1,6 @@
 import React from 'react'
-import Grid from '@material-ui/core/Grid';
+// import Grid from '@material-ui/core/Grid';
+import Grid from '@mui/material/Grid';
 import { makeStyles } from '@material-ui/styles';
 import { CarReq } from '../requests';
 import { List, Map } from '../components';
@@ -9,6 +10,8 @@ import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import moment from 'moment';
+import Button from '@mui/material/Button';
+import QueryFilter from '../components/QueryFilter/QueryFilter';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -49,33 +52,32 @@ const useStyle = makeStyles({
     height: '100%',
   },
   list: {
-    height: '92%',
-    overflow: 'scroll'
+    height: '100%',
   },
   tabpanel: {
     height: '88%'
-  }
+  },
+
 })
+
+const NUMBER_PER_PAGE = 12
 
 export default function MapPage() {
   const classes = useStyle();
   const [vehicles, setVehicles] = React.useState([])
-  const [vehiclesCallback, setVehiclesCallback] = React.useState(null)
   const [gantries, setGantries] = React.useState([])
-  const [gantriesCallback, setGantriesCallback] = React.useState(null)
 
-  const [selectVehicleRow, setSelectVehicleRow] = React.useState(null)
   const [selectVehicleRows, setSelectVehicleRows] = React.useState([])
 
   const [selectGantryRows, setSelectGantryRows] = React.useState([])
 
-  const [moreVehicles, setMoreVehicles] = React.useState({ cursor: '', more: false })
-  const [moreGantries, setMoreGantries] = React.useState({ cursor: '', more: false })
-
   const [value, setValue] = React.useState(0);
 
-  const [vehicleCheckedStatus, setVehicleCheckedStatus] = React.useState({ checked: [], selectAll: false })
-  const [gantryCheckedStatus, setGantryCheckedStatus] = React.useState({ checked: [], selectAll: false })
+  const [vehicleCheckedStatus, setVehicleCheckedStatus] = React.useState({ checked: [] })
+  const [gantryCheckedStatus, setGantryCheckedStatus] = React.useState({ checked: [] })
+
+  const [vehiclePageCount, setVehiclePageCount] = React.useState(0)
+  const [gantryPageCount, setGantryPageCount] = React.useState(0)
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -90,12 +92,9 @@ export default function MapPage() {
     return size;
   };
 
-  const getVehicles = (cursor) => {
-    CarReq.getVehicles(cursor).then(data => {
-      if (cursor !== '') {
-        alert('加载成功')
-      }
-      const { items, cursor: newCursor } = data
+  const getVehicles = (limit, skip, query) => {
+    CarReq.getVehicles(limit, skip, query).then(data => {
+      const { items, skip, count } = data
       const newRows = items.map(item => {
         const { _id } = item
         return {
@@ -103,21 +102,15 @@ export default function MapPage() {
           info: item
         }
       })
-      setVehiclesCallback(newRows)
-      if (newCursor) {
-        setMoreVehicles({ cursor: newCursor, more: true })
-      } else {
-        setMoreVehicles({ cursor: '', more: false })
-      }
+      setVehicles(newRows)
+      var pageCount = NUMBER_PER_PAGE > 0 ? Math.ceil(count / NUMBER_PER_PAGE) : count
+      setVehiclePageCount(pageCount)
     })
   }
 
-  const getGantries = (cursor) => {
-    CarReq.getGantries(cursor).then(data => {
-      if (cursor !== '') {
-        alert('加载成功')
-      }
-      let { items, cursor: newCursor } = data
+  const getGantries = (limit, skip, query) => {
+    CarReq.getGantries(limit, skip, query).then(data => {
+      let { items, skip, count } = data
       const newRows = items.map(item => {
         const { _id } = item
         return {
@@ -129,37 +122,16 @@ export default function MapPage() {
           info: item
         }
       })
-      setGantriesCallback(newRows)
-      if (newCursor) {
-        setMoreGantries({ cursor: newCursor, more: true })
-      } else {
-        setMoreGantries({ cursor: '', more: false })
-      }
+      setGantries(newRows)
+      var pageCount = NUMBER_PER_PAGE > 0 ? Math.ceil(count / NUMBER_PER_PAGE) : count
+      setGantryPageCount(pageCount)
     })
   }
 
   React.useEffect(() => {
-    getVehicles('')
-    getGantries('')
+    getVehicles(NUMBER_PER_PAGE)
+    getGantries(NUMBER_PER_PAGE)
   }, [])
-
-  React.useEffect(() => {
-    if (vehiclesCallback) {
-      setVehicles([...vehicles, ...vehiclesCallback])
-    }
-  }, [vehiclesCallback])
-
-  React.useEffect(() => {
-    if (gantriesCallback) {
-      setGantries([...gantries, ...gantriesCallback])
-    }
-  }, [gantriesCallback])
-
-  React.useEffect(() => {
-    if (selectVehicleRow) {
-      setSelectVehicleRows([...selectVehicleRows, selectVehicleRow])
-    }
-  }, [selectVehicleRow])
 
   const isValidForLongitude = (longitude) => {
     if (longitude <= 180 && longitude >= 0) return true
@@ -190,6 +162,16 @@ export default function MapPage() {
     return res
   }
 
+  const handleVehiclePageChange = (value) => {
+    setVehicles([])
+    getVehicles(NUMBER_PER_PAGE, (value - 1) * NUMBER_PER_PAGE)
+  }
+
+  const handleGantryPageChange = (value) => {
+    setGantries([])
+    getGantries(NUMBER_PER_PAGE, (value - 1) * NUMBER_PER_PAGE)
+  }
+
   const handleVehicleButtonClick = (checked) => {
     const newselectVehicleRows = [...selectVehicleRows]
     for (const selectVehicleRow of selectVehicleRows) {
@@ -200,12 +182,13 @@ export default function MapPage() {
     }
     setSelectVehicleRows(newselectVehicleRows)
     if (newselectVehicleRows.length < checked.length) {
+      var newSelectVehicleRows=[]
       for (const ckd of checked) {
         if (newselectVehicleRows.findIndex(element => element.id === ckd) === -1) {
           const row = vehicles.find(element => element.id === ckd)
           var positions = getPositions(row.info['PASSSTATION'])
           const currentIndex = positions.length - 1
-          setSelectVehicleRow({
+          newSelectVehicleRows.push({
             id: ckd,
             position: currentIndex >= 0 ? positions[currentIndex] : {},
             path: positions,
@@ -214,13 +197,19 @@ export default function MapPage() {
           })
         }
       }
+      setSelectVehicleRows(prev=>{
+        return[
+          ...prev,
+          ...newSelectVehicleRows
+        ]
+      })
     }
   }
 
   const handleGantryButtonClick = (checked) => {
     const newselectGantryRows = [...selectGantryRows]
     for (const selectGantryRow of selectGantryRows) {
-      if (checked.indexOf(selectGantryRows.id) === -1) {
+      if (checked.indexOf(selectGantryRow.id) === -1) {
         const currentIndex = newselectGantryRows.findIndex(element => element.id === selectGantryRow.id)
         newselectGantryRows.splice(currentIndex, 1)
       }
@@ -235,32 +224,78 @@ export default function MapPage() {
     setSelectGantryRows(newselectGantryRows)
   }
 
-  const vehicleSeeMore = () => {
-    if (moreVehicles.more) {
-      getVehicles(moreVehicles.cursor)
+  const handleQueryFilter = ({ queryType, queryFilter }) => {
+    if (queryType === 'gantry') {
+      CarReq.getGantries(10, 0, queryFilter).then(data => {
+        let { items } = data
+        const newSelectGantryRows = items.map(item => {
+          const { _id } = item
+          return {
+            id: _id,
+            position: {
+              longitude: parseFloat(item['LONGITUDE']['$numberDecimal']),
+              latitude: parseFloat(item['LATITUDE']['$numberDecimal'])
+            },
+            info: item
+          }
+        })
+        setSelectGantryRows(prev=>{
+          return[
+            ...prev,
+            ...newSelectGantryRows,
+          ]
+        })
+      })
+    } else if (queryType === 'vehicle') {
+      CarReq.getVehicles(10, 0, queryFilter).then(data => {
+        const { items } = data
+        const newSelectVehicleRows = items.map(item => {
+          var positions = getPositions(item['PASSSTATION'])
+          const currentIndex = positions.length - 1
+          return{
+            id:item['_id'],
+            position: currentIndex >= 0 ? positions[currentIndex] : {},
+            path: positions,
+            color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
+            info: item
+          }
+        })
+        setSelectVehicleRows(prev=>{
+          return[
+            ...prev,
+            ...newSelectVehicleRows
+          ]
+        })
+      })
     }
   }
-
-  const gantrySeeMore = () => {
-    if (moreGantries.more) {
-      getGantries(moreGantries.cursor)
-    }
-  }
-
 
   return (
     <Grid container spacing={2} className={classes.container}>
-      {/* <Grid item xs={2} className={classes.container}>
-        <List title='车辆' rows={vehicles} handleButtonClick={handleVehicleButtonClick} seeMore={vehicleSeeMore} />
-      </Grid>
-      <Grid item xs={2.2} className={classes.container}>
-        <List title='门架' rows={gantries} handleButtonClick={handleGantryButtonClick} seeMore={gantrySeeMore} />
-      </Grid>
-      <Grid item xs={7.8} className={classes.container}>
-        <Map selectVehicleRows={selectVehicleRows} selectGantryRows={selectGantryRows} />
-      </Grid> */}
       <Grid item xs={3} className={classes.container}>
-        <Box sx={{ width: '100%', height: '100%' }}>
+        <Box sx={{ width: '100%', height: '8%' }}>
+          <Grid container spacing={1}>
+            <Grid item xs={6}>
+              <QueryFilter handleQueryFilter={handleQueryFilter} />
+            </Grid>
+            <Grid item xs={6}>
+              <Button
+                fullWidth
+                variant="contained"
+                color="error"
+                onClick={() => {
+                  setSelectVehicleRows([])
+                  setSelectGantryRows([])
+                  setVehicleCheckedStatus({ checked: [] })
+                  setGantryCheckedStatus({ checked: [] })
+                }}
+              >
+                清除
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
+        <Box sx={{ width: '100%', height: '92%' }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={value} onChange={handleChange} aria-label="basic tabs example" centered >
               <Tab label="车辆" {...a11yProps(0)} />
@@ -268,10 +303,27 @@ export default function MapPage() {
             </Tabs>
           </Box>
           <TabPanel value={value} index={0} className={classes.tabpanel}>
-            <List title='全选' rows={vehicles} handleButtonClick={handleVehicleButtonClick} seeMore={vehicleSeeMore} checkedStatus={vehicleCheckedStatus} setCheckedStatus={setVehicleCheckedStatus} />
+            <List
+              title='车辆'
+              rows={vehicles}
+              handleButtonClick={handleVehicleButtonClick}
+              checkedStatus={vehicleCheckedStatus}
+              setCheckedStatus={setVehicleCheckedStatus}
+              pageCount={vehiclePageCount}
+              handlePageChange={handleVehiclePageChange}
+            />
+
           </TabPanel>
           <TabPanel value={value} index={1} className={classes.tabpanel}>
-            <List title='全选' rows={gantries} handleButtonClick={handleGantryButtonClick} seeMore={gantrySeeMore} checkedStatus={gantryCheckedStatus} setCheckedStatus={setGantryCheckedStatus} />
+            <List
+              title='门架'
+              rows={gantries}
+              handleButtonClick={handleGantryButtonClick}
+              checkedStatus={gantryCheckedStatus}
+              setCheckedStatus={setGantryCheckedStatus}
+              pageCount={gantryPageCount}
+              handlePageChange={handleGantryPageChange}
+            />
           </TabPanel>
         </Box>
       </Grid>
