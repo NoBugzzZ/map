@@ -17,7 +17,7 @@ const useStyle = makeStyles({
   },
   container: {
     height: '92%',
-    margin:'10px'
+    padding:'0px'
   },
   link: {
     'text-decoration': 'blink'
