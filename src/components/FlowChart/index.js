@@ -15,7 +15,7 @@ export default function ({ infoWindow }) {
             flow: v
           }
         })
-        setData(newData)
+        setData([])
       }
     }
   }, [infoWindow])

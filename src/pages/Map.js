@@ -134,12 +134,12 @@ export default function MapPage() {
   }, [])
 
   const isValidForLongitude = (longitude) => {
-    if (longitude <= 180 && longitude >= 0) return true
+    if (longitude <= 180 && longitude > 0) return true
     return false
   }
 
   const isValidForLatitude = (latitude) => {
-    if (latitude <= 90 && latitude >= 0) return true
+    if (latitude <= 90 && latitude > 0) return true
     return false
   }
 
@@ -150,13 +150,19 @@ export default function MapPage() {
       let { LONGITUDE: { $numberDecimal: longitude }, LATITUDE: { $numberDecimal: latitude }, TIME: timestamp, ...context } = v
       longitude = parseFloat(longitude)
       latitude = parseFloat(latitude)
-      if (isValidForLatitude(latitude) && isValidForLongitude(longitude)) {
-        res.push({
-          longitude,
-          latitude,
-          timestamp: moment.unix(timestamp / 1000).toISOString(),
-          context,
-        })
+      var {ORIGINALFLAG}=context
+      ORIGINALFLAG=parseInt(ORIGINALFLAG)
+      if(ORIGINALFLAG===186||ORIGINALFLAG===154){
+
+      }else{
+        if (isValidForLatitude(latitude) && isValidForLongitude(longitude)) {
+          res.push({
+            longitude,
+            latitude,
+            timestamp: moment.unix(timestamp / 1000).toISOString(),
+            context,
+          })
+        }
       }
     })
     return res
