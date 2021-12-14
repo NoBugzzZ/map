@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LineChart, XAxis, Tooltip, CartesianGrid, Line, YAxis } from 'recharts';
+import moment from 'moment';
 
 export default function ({ infoWindow }) {
 
@@ -11,11 +12,14 @@ export default function ({ infoWindow }) {
       const value = content['TRAFFICFLOWHISTORY']
       if (value) {
         const newData = value.map(v => {
+          const [flow,timestamp]=v
+          const time=moment.unix(timestamp/1000).toISOString()
           return {
-            flow: v
+            flow,
+            time
           }
         })
-        setData([])
+        setData(newData)
       }
     }
   }, [infoWindow])
@@ -26,8 +30,8 @@ export default function ({ infoWindow }) {
       data={data}
       margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
     >
-      <XAxis />
-      <YAxis />
+      <XAxis dataKey="time"/>
+      <YAxis dataKey="flow"/>
       <Tooltip />
       <CartesianGrid stroke="#f5f5f5" />
       <Line type="linear" dataKey="flow" stroke="#ff7300" yAxisId={0} />
