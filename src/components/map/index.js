@@ -383,7 +383,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           const { context: { ORIGINALFLAG, SPECIALTYPE } } = extData
           var backgroundUrl = 'https://img.icons8.com/ios-filled/30/000000/overhead-crane.png'
           if (ORIGINALFLAG === "2" || SPECIALTYPE === "154" || SPECIALTYPE === "186") {
-            backgroundUrl = 'https://img.icons8.com/officexs/30/000000/overhead-crane.png'
+            backgroundUrl = 'https://img.icons8.com/officexs/30/000000/overhead-crane.png' 
           }
           return (
             <div
