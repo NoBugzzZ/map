@@ -150,19 +150,13 @@ export default function MapPage() {
       let { LONGITUDE: { $numberDecimal: longitude }, LATITUDE: { $numberDecimal: latitude }, TIME: timestamp, ...context } = v
       longitude = parseFloat(longitude)
       latitude = parseFloat(latitude)
-      var {ORIGINALFLAG}=context
-      ORIGINALFLAG=parseInt(ORIGINALFLAG)
-      if(ORIGINALFLAG===186||ORIGINALFLAG===154){
-
-      }else{
-        if (isValidForLatitude(latitude) && isValidForLongitude(longitude)) {
-          res.push({
-            longitude,
-            latitude,
-            timestamp: moment.unix(timestamp / 1000).toISOString(),
-            context,
-          })
-        }
+      if (isValidForLatitude(latitude) && isValidForLongitude(longitude)) {
+        res.push({
+          longitude,
+          latitude,
+          timestamp: moment.unix(timestamp / 1000).toISOString(),
+          context,
+        })
       }
     })
     return res
@@ -188,7 +182,7 @@ export default function MapPage() {
     }
     setSelectVehicleRows(newselectVehicleRows)
     if (newselectVehicleRows.length < checked.length) {
-      var newSelectVehicleRows=[]
+      var newSelectVehicleRows = []
       for (const ckd of checked) {
         if (newselectVehicleRows.findIndex(element => element.id === ckd) === -1) {
           const row = vehicles.find(element => element.id === ckd)
@@ -203,8 +197,8 @@ export default function MapPage() {
           })
         }
       }
-      setSelectVehicleRows(prev=>{
-        return[
+      setSelectVehicleRows(prev => {
+        return [
           ...prev,
           ...newSelectVehicleRows
         ]
@@ -245,8 +239,8 @@ export default function MapPage() {
             info: item
           }
         })
-        setSelectGantryRows(prev=>{
-          return[
+        setSelectGantryRows(prev => {
+          return [
             ...prev,
             ...newSelectGantryRows,
           ]
@@ -258,16 +252,16 @@ export default function MapPage() {
         const newSelectVehicleRows = items.map(item => {
           var positions = getPositions(item['PASSSTATION'])
           const currentIndex = positions.length - 1
-          return{
-            id:item['_id'],
+          return {
+            id: item['_id'],
             position: currentIndex >= 0 ? positions[currentIndex] : {},
             path: positions,
             color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
             info: item
           }
         })
-        setSelectVehicleRows(prev=>{
-          return[
+        setSelectVehicleRows(prev => {
+          return [
             ...prev,
             ...newSelectVehicleRows
           ]

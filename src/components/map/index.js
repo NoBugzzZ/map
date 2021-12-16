@@ -151,8 +151,8 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           const len = Math.floor(v * (t - stime))
           let sPath = 0
           let ePath = 0
-          const {steps} =d.amap[i]
-          if(!steps||typeof(steps)==='undefined') return null
+          const { steps } = d.amap[i]
+          if (!steps || typeof (steps) === 'undefined') return null
           for (let step of steps) {
             sPath = ePath
             ePath += parseInt(step.distance)
@@ -339,7 +339,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           return (
             <div
               style={{
-                background: `url(https://img.icons8.com/fluency/48/000000/car.png`,
+                background: `url(https://img.icons8.com/fluency/48/000000/car.png)`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
@@ -370,7 +370,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
 
       <Markers
         markers={historyPositions}
-        useCluster={false}
+        useCluster={true}
         zIndex={10}
         events={{
           click: (e, marker) => {
@@ -380,10 +380,15 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           }
         }}
         render={extData => {
+          const { context: { ORIGINALFLAG, SPECIALTYPE } } = extData
+          var backgroundUrl = 'https://img.icons8.com/ios-filled/30/000000/overhead-crane.png'
+          if (ORIGINALFLAG === "2" || SPECIALTYPE === "154" || SPECIALTYPE === "186") {
+            backgroundUrl = 'https://img.icons8.com/officexs/30/000000/overhead-crane.png'
+          }
           return (
             <div
               style={{
-                background: `url(https://img.icons8.com/ios-filled/50/000000/overhead-crane.png`,
+                background: `url(${backgroundUrl})`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
@@ -412,7 +417,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           return (
             <div
               style={{
-                background: `url(https://img.icons8.com/material-sharp/24/000000/car.png`,
+                background: `url(https://img.icons8.com/material-sharp/24/000000/car.png)`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
@@ -440,7 +445,7 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           return (
             <div
               style={{
-                background: `url(https://img.icons8.com/ios-filled/50/000000/overhead-crane.png`,
+                background: `url(https://img.icons8.com/ios-filled/30/000000/overhead-crane.png)`,
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
