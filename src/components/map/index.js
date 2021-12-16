@@ -380,10 +380,13 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
           }
         }}
         render={extData => {
-          const { context: { ORIGINALFLAG, SPECIALTYPE } } = extData
+          const { context: { ORIGINALFLAG, SPECIALTYPE,GANTRYPOSITIONFLAG } } = extData
           var backgroundUrl = 'https://img.icons8.com/ios-filled/30/000000/overhead-crane.png'
           if (ORIGINALFLAG === "2" || SPECIALTYPE === "154" || SPECIALTYPE === "186") {
             backgroundUrl = 'https://img.icons8.com/officexs/30/000000/overhead-crane.png' 
+          }
+          if(GANTRYPOSITIONFLAG==='省界入口'||GANTRYPOSITIONFLAG==='省界出口'){
+            backgroundUrl ='https://img.icons8.com/ultraviolet/30/000000/overhead-crane.png'
           }
           return (
             <div
