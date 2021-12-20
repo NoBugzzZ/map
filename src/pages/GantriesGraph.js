@@ -172,6 +172,7 @@ export default function GantriesGraph() {
           click: (e, marker) => {
             const extData = marker.getExtData()
             console.log(extData)
+            alert(extData.label)
           }
         }}
       />
