@@ -21,7 +21,7 @@ const isValid = ({ longitude, latitude }) => {
 }
 
 export default function GantriesGraph() {
-  const [weight, setWeight] = useState(0.5)
+  const [weight, setWeight] = useState(0.1)
   const [graphNodes, setGraphNodes] = useState(null)
   const [graphEdges, setGraphEdges] = useState(null)
 
