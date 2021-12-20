@@ -109,7 +109,7 @@ export default function GantriesGraph() {
           <Polyline
             path={path}
             showDir={true}
-            style={{ strokeWeight: 3, strokeOpacity: edgeWeight }}
+            style={{ strokeWeight: 5, strokeOpacity: edgeWeight }}
           />
         )
       }))
@@ -133,7 +133,7 @@ export default function GantriesGraph() {
           <Polyline
             path={path}
             showDir={true}
-            style={{ strokeWeight: 3, strokeOpacity: edgeWeight }}
+            style={{ strokeWeight: 5, strokeOpacity: edgeWeight }}
           />
         )
       }))
