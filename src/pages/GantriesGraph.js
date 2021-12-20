@@ -52,13 +52,13 @@ export default function GantriesGraph() {
       }
       const keys = Object.keys(graphNodes)
 
-      graphEdges.forEach((link, index) => {
-        const [source, target] = link
+      graphEdges.forEach((graphEdge, index) => {
+        const { source, target, edgeWeight } = graphEdge
         const findSource = keys.find(k => k === source)
         const findTarget = keys.find(k => k === target)
         if (findSource && findTarget) {
           if (findSource !== findTarget) {
-            newGraph[source].targets.push(target)
+            newGraph[source].targets.push({ target, edgeWeight })
           } else {
             // console.log(`${source}->${target},自旋`)
           }
@@ -82,33 +82,39 @@ export default function GantriesGraph() {
         const { position, targets } = newGraph[key]
         newNodes.push({ position, label: key })
         targets.forEach((target, index) => {
-          let { position: targetPosition, targets: targetTargets } = newGraph[target]
+          const { target: targetNode, edgeWeight } = target
+          let { position: targetPosition, targets: targetTargets } = newGraph[targetNode]
           let context = {
-            path: [{ ...position }, { ...targetPosition }]
+            path: [{ ...position }, { ...targetPosition }],
+            edgeWeight
           }
-          const findIndex = targetTargets.findIndex(t => t === key)
+          const findIndex = targetTargets.findIndex(t => t.target === key)
           if (findIndex !== -1) {
-            newBackEdges.push({ path: [{ ...targetPosition }, { ...position }] })
+            newBackEdges.push({
+              path: [{ ...targetPosition }, { ...position }],
+              edgeWeight: targetTargets[findIndex].edgeWeight
+            })
             targetTargets.splice(findIndex, 1)
-            newGraph[target].targets = _.cloneDeep(targetTargets)
+            newGraph[targetNode].targets = _.cloneDeep(targetTargets)
           }
           newEdges.push({ ...context })
         })
       })
+      console.log(newNodes)
       console.log(newEdges, newBackEdges)
       setNodes(newNodes)
       setEdges(newEdges.map(edge => {
-        const { path } = edge
+        const { path, edgeWeight } = edge
         return (
           <Polyline
             path={path}
             showDir={true}
-            style={{ strokeWeight: 3 }}
+            style={{ strokeWeight: 3, strokeOpacity: edgeWeight }}
           />
         )
       }))
       setBackEdges(newBackEdges.map(backEdge => {
-        const { path } = backEdge
+        const { path, edgeWeight } = backEdge
         let [sourcePosition, targetPosition] = path
         const { longitude: sourceLongitude, latitude: sourceLatitude } = sourcePosition
         const { longitude: targetLongitude, latitude: targetLatitude } = targetPosition
@@ -127,7 +133,7 @@ export default function GantriesGraph() {
           <Polyline
             path={path}
             showDir={true}
-            style={{ strokeWeight: 3 }}
+            style={{ strokeWeight: 3, strokeOpacity: edgeWeight }}
           />
         )
       }))
