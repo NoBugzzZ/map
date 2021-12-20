@@ -65,6 +65,10 @@ export default function Layout() {
             navigate('/map')
             handleClose()
           }}>map</MenuItem>
+          <MenuItem onClick={()=>{
+            navigate('/gantries')
+            handleClose()
+          }}>gantries</MenuItem>
         </Menu>
       </div>
       <div className={classes.container}>
