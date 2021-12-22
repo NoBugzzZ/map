@@ -12,6 +12,8 @@ import moment from 'moment';
 import Button from '@mui/material/Button';
 import QueryFilter from '../components/QueryFilter/QueryFilter';
 
+var _ = require('lodash')
+
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -72,7 +74,9 @@ export default function MapPage() {
   const [vehiclePageCount, setVehiclePageCount] = React.useState(0)
 
   const [trafficTransactions, setTrafficTransactions] = React.useState([])
+  const [selectTrafficTransactionsRows, setSelectTrafficTransactionsRows] = React.useState([])
   const [trafficTransactionsPageCount, setTrafficTransactionsPageCount] = React.useState(0)
+  const [trafficTransactionsCheckedStatus, setTrafficTransactionsCheckedStatus] = React.useState({ checked: [] })
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -122,6 +126,7 @@ export default function MapPage() {
 
   React.useEffect(() => {
     getVehicles(NUMBER_PER_PAGE)
+    getTrafficTransactions(NUMBER_PER_PAGE)
   }, [])
 
   const isValidForLongitude = (longitude) => {
@@ -157,6 +162,10 @@ export default function MapPage() {
     setVehicles([])
     getVehicles(NUMBER_PER_PAGE, (value - 1) * NUMBER_PER_PAGE)
   }
+  const handleTrafficTransactionsPageChange = (value) => {
+    setTrafficTransactions([])
+    getTrafficTransactions(NUMBER_PER_PAGE, (value - 1) * NUMBER_PER_PAGE)
+  }
 
   const handleVehicleButtonClick = (checked) => {
     const newselectVehicleRows = [...selectVehicleRows]
@@ -169,18 +178,22 @@ export default function MapPage() {
     setSelectVehicleRows(newselectVehicleRows)
     if (newselectVehicleRows.length < checked.length) {
       var newSelectVehicleRows = []
+      let newChecked = _.cloneDeep(checked)
+      let flag = false
       for (const ckd of checked) {
         if (newselectVehicleRows.findIndex(element => element.id === ckd) === -1) {
           const row = vehicles.find(element => element.id === ckd)
-          var positions = getPositions(row.info['PASSSTATION'])
-          const currentIndex = positions.length - 1
-          newSelectVehicleRows.push({
-            id: ckd,
-            position: currentIndex >= 0 ? positions[currentIndex] : {},
-            path: positions,
-            color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
-            info: row.info
-          })
+          if (row) {
+            var positions = getPositions(row.info['PASSSTATION'])
+            const currentIndex = positions.length - 1
+            newSelectVehicleRows.push({
+              id: ckd,
+              position: currentIndex >= 0 ? positions[currentIndex] : {},
+              path: positions,
+              color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
+              info: row.info
+            })
+          }
         }
       }
       setSelectVehicleRows(prev => {
@@ -189,6 +202,27 @@ export default function MapPage() {
           ...newSelectVehicleRows
         ]
       })
+    }
+  }
+
+  const handleTrafficTransactionsListButtonClick = (checked) => {
+    const newselectTrafficTransactionsRows = [...selectTrafficTransactionsRows]
+    for (const selectTrafficTransactionsRow of selectTrafficTransactionsRows) {
+      if (checked.indexOf(selectTrafficTransactionsRow.id) === -1) {
+        const currentIndex = newselectTrafficTransactionsRows.findIndex(element => element.id === selectTrafficTransactionsRow.id)
+        newselectTrafficTransactionsRows.splice(currentIndex, 1)
+      }
+    }
+    if (newselectTrafficTransactionsRows.length < checked.length) {
+      for (const ckd of checked) {
+        if (newselectTrafficTransactionsRows.findIndex(element => element.id === ckd) === -1) {
+          const row = trafficTransactions.find(element => element.id === ckd)
+          if(row){
+            newselectTrafficTransactionsRows.push(row)
+          }
+        }
+      }
+      console.log(newselectTrafficTransactionsRows)
     }
   }
 
@@ -261,7 +295,15 @@ export default function MapPage() {
             />
           </TabPanel>
           <TabPanel value={value} index={1} className={classes.tabpanel}>
-            通行记录
+            <List
+              title='通行记录'
+              rows={trafficTransactions}
+              handleButtonClick={handleTrafficTransactionsListButtonClick}
+              checkedStatus={trafficTransactionsCheckedStatus}
+              setCheckedStatus={setTrafficTransactionsCheckedStatus}
+              pageCount={trafficTransactionsPageCount}
+              handlePageChange={handleTrafficTransactionsPageChange}
+            />
           </TabPanel>
         </Box>
       </Grid>

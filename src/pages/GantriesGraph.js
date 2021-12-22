@@ -37,6 +37,11 @@ export default function GantriesGraph() {
   const [isDisplayVirtualGantry, setIsDisplayVirtualGantry] = useState(false)
   const [displayGraph, setDisplayGraph] = useState(null)
 
+  const [HEXID, setHEXID] = useState('')
+  const [center, setCenter] = useState({ longitude: 120, latitude: 37 })
+  const [zoom, setZoom] = useState(5)
+  const [mapInstance, setMapInstance] = useState(null)
+
   // useEffect(() => {
   //   if (weight) {
   //     getNodes().then(data => setGraphNodes(data))
@@ -194,17 +199,33 @@ export default function GantriesGraph() {
     getEdges(weight).then(data => setGraphEdges(data))
   }
 
+  const findPosition = () => {
+    console.log(HEXID)
+    const find = nodes.find(node => node.label === HEXID)
+    if (find) {
+      const { position } = find
+      setCenter(position)
+      setZoom(18)
+    }
+  }
+
   return (
     <Map
       amapkey={'c4682e400c06b2b8be5e65b99c6404f5'}
-      zoom={5}
-      center={{ longitude: 120, latitude: 37 }}
+      zoom={zoom}
+      center={center}
       events={{
         created: (ins) => {
-          // setMap(ins)
+          setMapInstance(ins)
         },
-        zoomchange: (e) => {
-        }
+        zoomchange: () => {
+          const newZoom = mapInstance.getZoom()
+          setZoom(newZoom)
+        },
+        moveend: () => {
+          const { R: longitude, Q: latitude } = mapInstance.getCenter()
+          setCenter({ longitude, latitude })
+        },
       }}
     >
       <Markers
@@ -213,7 +234,7 @@ export default function GantriesGraph() {
           if (type === 0) {
             return [-15, -30]
           } else {
-            return [-10,-34]
+            return [-10, -34]
           }
         }}
         markers={nodes}
@@ -333,6 +354,24 @@ export default function GantriesGraph() {
                   handleImportButton()
                 }}
               >导入</Button>
+            </Grid>
+            <Grid item xs={8}>
+              <TextField
+                label="HEX_ID"
+                variant="standard"
+                value={HEXID}
+                onChange={(e) => {
+                  setHEXID(e.target.value)
+                }}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  findPosition()
+                }}
+              >查询</Button>
             </Grid>
           </Grid>
         </Box>
