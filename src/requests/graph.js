@@ -19,13 +19,13 @@ export async function getEdges(weight) {
   let url = backendApi + '/api/graph/edges'
   const { data } = await axios.request({
     url,
-    method: 'GET',
-    params: {
-      weight
-    },
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
+    data:{
+      weight
+    }
   })
   return data
 }

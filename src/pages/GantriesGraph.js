@@ -24,7 +24,7 @@ const isValid = ({ longitude, latitude }) => {
 }
 
 export default function GantriesGraph() {
-  const [weight, setWeight] = useState(0.1)
+  const [weight, setWeight] = useState({ min: 0.1, max: 1 })
   const [graphNodes, setGraphNodes] = useState(null)
   const [graphEdges, setGraphEdges] = useState(null)
   const [graph, setGraph] = useState(null)
@@ -37,12 +37,12 @@ export default function GantriesGraph() {
   const [isDisplayVirtualGantry, setIsDisplayVirtualGantry] = useState(false)
   const [displayGraph, setDisplayGraph] = useState(null)
 
-  useEffect(() => {
-    if (weight) {
-      getNodes().then(data => setGraphNodes(data))
-      getEdges(weight).then(data => setGraphEdges(data))
-    }
-  }, [weight])
+  // useEffect(() => {
+  //   if (weight) {
+  //     getNodes().then(data => setGraphNodes(data))
+  //     getEdges(weight).then(data => setGraphEdges(data))
+  //   }
+  // }, [weight])
 
   useEffect(() => {
     if (graphNodes && graphEdges) {
@@ -166,7 +166,7 @@ export default function GantriesGraph() {
     }
   }, [displayGraph])
 
-  const handleImportButton = (weight) => {
+  const handleImportButton = () => {
     setGraphNodes(null)
     setGraphEdges(null)
     setGraph(null)
@@ -219,7 +219,7 @@ export default function GantriesGraph() {
                 }}
               ></div>
             )
-          }else{
+          } else {
             return false
           }
         }}
@@ -256,17 +256,52 @@ export default function GantriesGraph() {
                 label="Virtual"
               />
             </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={4}>
               <TextField
-                id="outlined-basic"
-                label="weight"
-                variant="outlined"
-                value={weight}
+                label="MinWeight"
+                variant="standard"
+                value={weight ? weight.min : 0.1}
                 onChange={(e) => {
-                  const newWeight = parseFloat(e.target.value)
-                  if (newWeight <= 1 && newWeight >= 0) {
-                    setWeight(newWeight)
-                  }
+                  const newMinWeight = parseFloat(e.target.value)
+                  setWeight(prev => {
+                    if (prev.max < newMinWeight) {
+                      return {
+                        ...prev,
+                        min: newMinWeight,
+                        max: newMinWeight,
+                      }
+                    } else {
+                      return {
+                        ...prev,
+                        min: newMinWeight,
+                      }
+                    }
+                  })
+                }}
+                type="number"
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <TextField
+                label="MaxWeight"
+                variant="standard"
+                value={weight ? weight.max : 1}
+                onChange={(e) => {
+                  const newMaxWeight = parseFloat(e.target.value)
+                  setWeight(prev => {
+                    if (prev.min > newMaxWeight) {
+                      return {
+                        ...prev,
+                        min: newMaxWeight,
+                        max: newMaxWeight,
+                      }
+                    } else {
+                      return {
+                        ...prev,
+                        max: newMaxWeight,
+                      }
+                    }
+                  })
                 }}
                 type="number"
               />
@@ -275,7 +310,7 @@ export default function GantriesGraph() {
               <Button
                 variant="contained"
                 onClick={() => {
-                  handleImportButton(weight)
+                  handleImportButton()
                 }}
               >导入</Button>
             </Grid>

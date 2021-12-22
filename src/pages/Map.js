@@ -63,15 +63,16 @@ const NUMBER_PER_PAGE = 12
 
 export default function MapPage() {
   const classes = useStyle();
-  const [vehicles, setVehicles] = React.useState([])
-
-  const [selectVehicleRows, setSelectVehicleRows] = React.useState([])
 
   const [value, setValue] = React.useState(0);
 
+  const [vehicles, setVehicles] = React.useState([])
+  const [selectVehicleRows, setSelectVehicleRows] = React.useState([])
   const [vehicleCheckedStatus, setVehicleCheckedStatus] = React.useState({ checked: [] })
-
   const [vehiclePageCount, setVehiclePageCount] = React.useState(0)
+
+  const [trafficTransactions, setTrafficTransactions] = React.useState([])
+  const [trafficTransactionsPageCount, setTrafficTransactionsPageCount] = React.useState(0)
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -88,7 +89,7 @@ export default function MapPage() {
 
   const getVehicles = (limit, skip, query) => {
     CarReq.getVehicles(limit, skip, query).then(data => {
-      const { items, skip, count } = data
+      const { items, count } = data
       const newRows = items.map(item => {
         const { _id } = item
         return {
@@ -101,6 +102,23 @@ export default function MapPage() {
       setVehiclePageCount(pageCount)
     })
   }
+
+  const getTrafficTransactions = (limit, skip, query) => {
+    CarReq.getTrafficTransactions(limit, skip, query).then(data => {
+      let { items, count } = data
+      const newRows = items.map(item => {
+        const { _id } = item
+        return {
+          id: _id,
+          info: item
+        }
+      })
+      setTrafficTransactions(newRows)
+      var pageCount = NUMBER_PER_PAGE > 0 ? Math.ceil(count / NUMBER_PER_PAGE) : count
+      setTrafficTransactionsPageCount(pageCount)
+    })
+  }
+
 
   React.useEffect(() => {
     getVehicles(NUMBER_PER_PAGE)
