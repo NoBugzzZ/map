@@ -105,11 +105,11 @@ export default function GantriesGraph() {
       let newBackEdges = []
       const keys = Object.keys(newGraph)
       keys.forEach(key => {
-        const { position, targets } = newGraph[key]
-        newNodes.push({ position, label: key })
+        const { position, targets, type } = newGraph[key]
+        newNodes.push({ position, label: key, type })
         targets.forEach((target, index) => {
           const { target: targetNode, edgeWeight } = target
-          if(newGraph.hasOwnProperty(targetNode)){
+          if (newGraph.hasOwnProperty(targetNode)) {
             let { position: targetPosition, targets: targetTargets } = newGraph[targetNode]
             let context = {
               path: [{ ...position }, { ...targetPosition }],
@@ -199,6 +199,28 @@ export default function GantriesGraph() {
           click: (e, marker) => {
             const extData = marker.getExtData()
             alert(extData.label)
+          }
+        }}
+        render={extData => {
+          const { type } = extData
+          if (type === 0) {
+            return (
+              <div
+                style={{
+                  background: `url('http://icons.iconarchive.com/icons/paomedia/small-n-flat/1024/map-marker-icon.png')`,
+                  backgroundSize: 'contain',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'center',
+                  width: '30px',
+                  height: '40px',
+                  color: '#000',
+                  textAlign: 'center',
+                  lineHeight: '40px'
+                }}
+              ></div>
+            )
+          }else{
+            return false
           }
         }}
       />
