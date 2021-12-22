@@ -59,14 +59,14 @@ export default function GantriesGraph() {
       const keys = Object.keys(graphNodes)
 
       graphEdges.forEach((graphEdge, index) => {
-        const { source, target, edgeWeight } = graphEdge
+        const { source, target, edgeWeight, flow } = graphEdge
         const findSource = keys.find(k => k === source)
         const findTarget = keys.find(k => k === target)
         if (findSource && findTarget) {
           if (findSource !== findTarget) {
-            newGraph[source].targets.push({ target, edgeWeight })
+            newGraph[source].targets.push({ target, edgeWeight, flow })
           } else {
-            // console.log(`${source}->${target},自旋`)
+            console.log(`${source}->${target},自旋`)
           }
         } else {
           console.log(`${source}或${target}的点不存在`)
@@ -99,6 +99,7 @@ export default function GantriesGraph() {
 
   useEffect(() => {
     if (displayGraph) {
+      console.log(displayGraph)
       let newGraph = _.cloneDeep(displayGraph)
       let newNodes = []
       let newEdges = []
@@ -108,18 +109,20 @@ export default function GantriesGraph() {
         const { position, targets, type } = newGraph[key]
         newNodes.push({ position, label: key, type })
         targets.forEach((target, index) => {
-          const { target: targetNode, edgeWeight } = target
+          const { target: targetNode, edgeWeight, flow } = target
           if (newGraph.hasOwnProperty(targetNode)) {
             let { position: targetPosition, targets: targetTargets } = newGraph[targetNode]
             let context = {
               path: [{ ...position }, { ...targetPosition }],
-              edgeWeight
+              edgeWeight,
+              flow
             }
             const findIndex = targetTargets.findIndex(t => t.target === key)
             if (findIndex !== -1) {
               newBackEdges.push({
                 path: [{ ...targetPosition }, { ...position }],
-                edgeWeight: targetTargets[findIndex].edgeWeight
+                edgeWeight: targetTargets[findIndex].edgeWeight,
+                flow: targetTargets[findIndex].flow,
               })
               targetTargets.splice(findIndex, 1)
               newGraph[targetNode].targets = _.cloneDeep(targetTargets)
@@ -130,17 +133,23 @@ export default function GantriesGraph() {
       })
       setNodes(newNodes)
       setEdges(newEdges.map(edge => {
-        const { path, edgeWeight } = edge
+        const { path, edgeWeight, flow } = edge
         return (
           <Polyline
             path={path}
             showDir={true}
-            style={{ strokeWeight: 5, strokeOpacity: edgeWeight }}
+            style={{ strokeWeight: 4 + 3 * edgeWeight, strokeOpacity: 0.2 + 0.8 * edgeWeight }}
+            events={{
+              click: () => {
+                alert(flow)
+              }
+            }}
+            draggable={true}
           />
         )
       }))
       setBackEdges(newBackEdges.map(backEdge => {
-        const { path, edgeWeight } = backEdge
+        const { path, edgeWeight, flow } = backEdge
         let [sourcePosition, targetPosition] = path
         const { longitude: sourceLongitude, latitude: sourceLatitude } = sourcePosition
         const { longitude: targetLongitude, latitude: targetLatitude } = targetPosition
@@ -159,7 +168,13 @@ export default function GantriesGraph() {
           <Polyline
             path={path}
             showDir={true}
-            style={{ strokeWeight: 5, strokeOpacity: edgeWeight }}
+            style={{ strokeWeight: 4 + 3 * edgeWeight, strokeOpacity: 0.2 + 0.8 * edgeWeight }}
+            events={{
+              click: () => {
+                alert(flow)
+              }
+            }}
+            draggable={true}
           />
         )
       }))
@@ -193,6 +208,14 @@ export default function GantriesGraph() {
       }}
     >
       <Markers
+        offset={(extData) => {
+          const { type } = extData
+          if (type === 0) {
+            return [-15, -30]
+          } else {
+            return [-10,-34]
+          }
+        }}
         markers={nodes}
         useCluster={true}
         events={{
@@ -208,14 +231,11 @@ export default function GantriesGraph() {
               <div
                 style={{
                   background: `url('http://icons.iconarchive.com/icons/paomedia/small-n-flat/1024/map-marker-icon.png')`,
-                  backgroundSize: 'contain',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'center',
                   width: '30px',
                   height: '40px',
-                  color: '#000',
-                  textAlign: 'center',
-                  lineHeight: '40px'
+                  backgroundSize: 'contain',
+                  backgroundRepeat: 'no-repeat',
+
                 }}
               ></div>
             )
