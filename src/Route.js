@@ -3,8 +3,8 @@ import { HomePage, Map, NotFoundPage, GantriesGraph } from './pages';
 
 const routes = {
   '/': () => <HomePage />,
-  '/map': () => <Map />,
-  '/gantries': () => <GantriesGraph />
+  '/vehicle': () => <Map />,
+  '/gantry': () => <GantriesGraph />
 };
 
 const Route = () => {

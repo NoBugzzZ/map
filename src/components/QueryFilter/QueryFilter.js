@@ -43,7 +43,6 @@ export default function QueryFilter({ handleQueryFilter }) {
             onChange={handleQueryTypeChange}
           >
             <MenuItem value={'vehicle'}>vehicle</MenuItem>
-            <MenuItem value={'gantry'}>gantry</MenuItem>
           </Select>
         </FormControl>
         <Grid container spacing={3}>

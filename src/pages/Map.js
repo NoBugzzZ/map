@@ -1,5 +1,4 @@
 import React from 'react'
-// import Grid from '@material-ui/core/Grid';
 import Grid from '@mui/material/Grid';
 import { makeStyles } from '@mui/styles';
 import { CarReq } from '../requests';
@@ -65,19 +64,14 @@ const NUMBER_PER_PAGE = 12
 export default function MapPage() {
   const classes = useStyle();
   const [vehicles, setVehicles] = React.useState([])
-  const [gantries, setGantries] = React.useState([])
 
   const [selectVehicleRows, setSelectVehicleRows] = React.useState([])
-
-  const [selectGantryRows, setSelectGantryRows] = React.useState([])
 
   const [value, setValue] = React.useState(0);
 
   const [vehicleCheckedStatus, setVehicleCheckedStatus] = React.useState({ checked: [] })
-  const [gantryCheckedStatus, setGantryCheckedStatus] = React.useState({ checked: [] })
 
   const [vehiclePageCount, setVehiclePageCount] = React.useState(0)
-  const [gantryPageCount, setGantryPageCount] = React.useState(0)
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -108,29 +102,8 @@ export default function MapPage() {
     })
   }
 
-  const getGantries = (limit, skip, query) => {
-    CarReq.getGantries(limit, skip, query).then(data => {
-      let { items, skip, count } = data
-      const newRows = items.map(item => {
-        const { _id } = item
-        return {
-          id: _id,
-          position: {
-            longitude: parseFloat(item['LONGITUDE']['$numberDecimal']),
-            latitude: parseFloat(item['LATITUDE']['$numberDecimal'])
-          },
-          info: item
-        }
-      })
-      setGantries(newRows)
-      var pageCount = NUMBER_PER_PAGE > 0 ? Math.ceil(count / NUMBER_PER_PAGE) : count
-      setGantryPageCount(pageCount)
-    })
-  }
-
   React.useEffect(() => {
     getVehicles(NUMBER_PER_PAGE)
-    getGantries(NUMBER_PER_PAGE)
   }, [])
 
   const isValidForLongitude = (longitude) => {
@@ -167,11 +140,6 @@ export default function MapPage() {
     getVehicles(NUMBER_PER_PAGE, (value - 1) * NUMBER_PER_PAGE)
   }
 
-  const handleGantryPageChange = (value) => {
-    setGantries([])
-    getGantries(NUMBER_PER_PAGE, (value - 1) * NUMBER_PER_PAGE)
-  }
-
   const handleVehicleButtonClick = (checked) => {
     const newselectVehicleRows = [...selectVehicleRows]
     for (const selectVehicleRow of selectVehicleRows) {
@@ -206,46 +174,9 @@ export default function MapPage() {
     }
   }
 
-  const handleGantryButtonClick = (checked) => {
-    const newselectGantryRows = [...selectGantryRows]
-    for (const selectGantryRow of selectGantryRows) {
-      if (checked.indexOf(selectGantryRow.id) === -1) {
-        const currentIndex = newselectGantryRows.findIndex(element => element.id === selectGantryRow.id)
-        newselectGantryRows.splice(currentIndex, 1)
-      }
-    }
-    if (newselectGantryRows.length < checked.length) {
-      for (const ckd of checked) {
-        if (newselectGantryRows.findIndex(element => element.id === ckd) === -1) {
-          newselectGantryRows.push(gantries.find(g => g.id === ckd))
-        }
-      }
-    }
-    setSelectGantryRows(newselectGantryRows)
-  }
-
   const handleQueryFilter = ({ queryType, queryFilter }) => {
     if (queryType === 'gantry') {
-      CarReq.getGantries(10, 0, queryFilter).then(data => {
-        let { items } = data
-        const newSelectGantryRows = items.map(item => {
-          const { _id } = item
-          return {
-            id: _id,
-            position: {
-              longitude: parseFloat(item['LONGITUDE']['$numberDecimal']),
-              latitude: parseFloat(item['LATITUDE']['$numberDecimal'])
-            },
-            info: item
-          }
-        })
-        setSelectGantryRows(prev => {
-          return [
-            ...prev,
-            ...newSelectGantryRows,
-          ]
-        })
-      })
+
     } else if (queryType === 'vehicle') {
       CarReq.getVehicles(10, 0, queryFilter).then(data => {
         const { items } = data
@@ -285,9 +216,7 @@ export default function MapPage() {
                 color="error"
                 onClick={() => {
                   setSelectVehicleRows([])
-                  setSelectGantryRows([])
                   setVehicleCheckedStatus({ checked: [] })
-                  setGantryCheckedStatus({ checked: [] })
                 }}
               >
                 清除
@@ -299,7 +228,7 @@ export default function MapPage() {
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={value} onChange={handleChange} aria-label="basic tabs example" centered >
               <Tab label="车辆" {...a11yProps(0)} />
-              <Tab label="门架" {...a11yProps(1)} />
+              <Tab label="通行记录" {...a11yProps(1)} />
             </Tabs>
           </Box>
           <TabPanel value={value} index={0} className={classes.tabpanel}>
@@ -312,23 +241,14 @@ export default function MapPage() {
               pageCount={vehiclePageCount}
               handlePageChange={handleVehiclePageChange}
             />
-
           </TabPanel>
           <TabPanel value={value} index={1} className={classes.tabpanel}>
-            <List
-              title='门架'
-              rows={gantries}
-              handleButtonClick={handleGantryButtonClick}
-              checkedStatus={gantryCheckedStatus}
-              setCheckedStatus={setGantryCheckedStatus}
-              pageCount={gantryPageCount}
-              handlePageChange={handleGantryPageChange}
-            />
+            通行记录
           </TabPanel>
         </Box>
       </Grid>
       <Grid item xs={9} className={classes.container}>
-        <Map selectVehicleRows={selectVehicleRows} selectGantryRows={selectGantryRows} />
+        <Map selectVehicleRows={selectVehicleRows} />
       </Grid>
     </Grid>
 

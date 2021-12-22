@@ -18,7 +18,7 @@ const useStyle = makeStyles({
   }
 })
 
-export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
+export default function CustomMap({ selectVehicleRows }) {
 
   const classes = useStyle()
   const [infoWindow, setInfoWindow] = React.useState({ visible: false, position: { longitude: 120, latitude: 30 }, content: 'content', size: { width: 500, height: 150 }, offset: [2, -35], type: 0 });
@@ -130,15 +130,6 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
     }
     setPredictPositions(newPredictPositions)
   }, [predictTime])
-
-  React.useEffect(() => {
-    const lastIndex = selectGantryRows.length - 1
-    if (lastIndex >= 0) {
-      const { position } = selectGantryRows[lastIndex]
-      setZoom(8)
-      setCenter(position)
-    }
-  }, [selectGantryRows])
 
   const getPredictPosition = (t, d) => {
     if (Object.size(d.direction) > 0) {
@@ -426,34 +417,6 @@ export default function CustomMap({ selectVehicleRows, selectGantryRows }) {
                 backgroundPosition: 'center',
                 width: '24px',
                 height: '24px',
-              }}
-            ></div>
-          )
-        }}
-      >
-      </Markers>
-
-      <Markers
-        markers={selectGantryRows}
-        useCluster={true}
-        zIndex={10}
-        events={{
-          click: (e, marker) => {
-            const extData = marker.getExtData()
-            const { position: { longitude, latitude } } = extData
-            setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: JSON.stringify(extData.info, null, 2), size: { width: 1000, height: 500 }, offset: [0, -35], type: 1 })
-          }
-        }}
-        render={extData => {
-          return (
-            <div
-              style={{
-                background: `url(https://img.icons8.com/ios-filled/30/000000/overhead-crane.png)`,
-                backgroundSize: 'contain',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-                width: '30px',
-                height: '30px',
               }}
             ></div>
           )

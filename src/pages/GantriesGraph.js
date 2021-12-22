@@ -5,6 +5,9 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Grid';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 
 var _ = require('lodash')
 
@@ -24,12 +27,15 @@ export default function GantriesGraph() {
   const [weight, setWeight] = useState(0.1)
   const [graphNodes, setGraphNodes] = useState(null)
   const [graphEdges, setGraphEdges] = useState(null)
-
   const [graph, setGraph] = useState(null)
 
   const [nodes, setNodes] = useState([])
   const [edges, setEdges] = useState(null)
   const [backEdges, setBackEdges] = useState(null)
+
+  const [isDisplayPhysicalGantry, setIsDisplayPhysicalGantry] = useState(false)
+  const [isDisplayVirtualGantry, setIsDisplayVirtualGantry] = useState(false)
+  const [displayGraph, setDisplayGraph] = useState(null)
 
   useEffect(() => {
     if (weight) {
@@ -43,9 +49,9 @@ export default function GantriesGraph() {
       // console.log(graphNodes,graphEdges)
       let newGraph = {}
       for (let i in graphNodes) {
-        const [longitude, latitude] = graphNodes[i]
+        const [longitude, latitude, type] = graphNodes[i]
         if (isValid({ longitude, latitude })) {
-          newGraph[i] = { position: { longitude, latitude }, targets: [] }
+          newGraph[i] = { position: { longitude, latitude }, targets: [], type }
         } else {
           console.log(`${i}的longitude=${longitude},latitude=${latitude}`)
         }
@@ -66,14 +72,34 @@ export default function GantriesGraph() {
           console.log(`${source}或${target}的点不存在`)
         }
       })
-      console.log(newGraph)
       setGraph(newGraph)
     }
   }, [graphNodes, graphEdges])
 
   useEffect(() => {
     if (graph) {
-      let newGraph = _.cloneDeep(graph)
+      let newDisplayGraph = {}
+      if (isDisplayPhysicalGantry) {
+        for (let key in graph) {
+          if (graph[key].type === 0) {
+            newDisplayGraph[key] = graph[key]
+          }
+        }
+      }
+      if (isDisplayVirtualGantry) {
+        for (let key in graph) {
+          if (graph[key].type === 1) {
+            newDisplayGraph[key] = graph[key]
+          }
+        }
+      }
+      setDisplayGraph(newDisplayGraph)
+    }
+  }, [graph, isDisplayPhysicalGantry, isDisplayVirtualGantry])
+
+  useEffect(() => {
+    if (displayGraph) {
+      let newGraph = _.cloneDeep(displayGraph)
       let newNodes = []
       let newEdges = []
       let newBackEdges = []
@@ -83,25 +109,25 @@ export default function GantriesGraph() {
         newNodes.push({ position, label: key })
         targets.forEach((target, index) => {
           const { target: targetNode, edgeWeight } = target
-          let { position: targetPosition, targets: targetTargets } = newGraph[targetNode]
-          let context = {
-            path: [{ ...position }, { ...targetPosition }],
-            edgeWeight
+          if(newGraph.hasOwnProperty(targetNode)){
+            let { position: targetPosition, targets: targetTargets } = newGraph[targetNode]
+            let context = {
+              path: [{ ...position }, { ...targetPosition }],
+              edgeWeight
+            }
+            const findIndex = targetTargets.findIndex(t => t.target === key)
+            if (findIndex !== -1) {
+              newBackEdges.push({
+                path: [{ ...targetPosition }, { ...position }],
+                edgeWeight: targetTargets[findIndex].edgeWeight
+              })
+              targetTargets.splice(findIndex, 1)
+              newGraph[targetNode].targets = _.cloneDeep(targetTargets)
+            }
+            newEdges.push({ ...context })
           }
-          const findIndex = targetTargets.findIndex(t => t.target === key)
-          if (findIndex !== -1) {
-            newBackEdges.push({
-              path: [{ ...targetPosition }, { ...position }],
-              edgeWeight: targetTargets[findIndex].edgeWeight
-            })
-            targetTargets.splice(findIndex, 1)
-            newGraph[targetNode].targets = _.cloneDeep(targetTargets)
-          }
-          newEdges.push({ ...context })
         })
       })
-      console.log(newNodes)
-      console.log(newEdges, newBackEdges)
       setNodes(newNodes)
       setEdges(newEdges.map(edge => {
         const { path, edgeWeight } = edge
@@ -138,7 +164,7 @@ export default function GantriesGraph() {
         )
       }))
     }
-  }, [graph])
+  }, [displayGraph])
 
   const handleImportButton = (weight) => {
     setGraphNodes(null)
@@ -147,6 +173,7 @@ export default function GantriesGraph() {
     setNodes([])
     setEdges(null)
     setBackEdges(null)
+    setDisplayGraph(null)
 
     getNodes().then(data => setGraphNodes(data))
     getEdges(weight).then(data => setGraphEdges(data))
@@ -171,7 +198,6 @@ export default function GantriesGraph() {
         events={{
           click: (e, marker) => {
             const extData = marker.getExtData()
-            console.log(extData)
             alert(extData.label)
           }
         }}
@@ -179,9 +205,35 @@ export default function GantriesGraph() {
       {edges}
       {backEdges}
 
-      <div className="customLayer" style={{ position: 'absolute', right: '100px', bottom: '30px', width: '200px' }}>
+      <div className="customLayer" style={{ position: 'absolute', right: '100px', bottom: '30px', width: '250px' }}>
         <Box sx={{ width: '100%' }}>
           <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isDisplayPhysicalGantry}
+                    onChange={(event) => {
+                      setIsDisplayPhysicalGantry(event.target.checked)
+                    }}
+                  />
+                }
+                label="Physical"
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isDisplayVirtualGantry}
+                    onChange={(event) => {
+                      setIsDisplayVirtualGantry(event.target.checked)
+                    }}
+                  />
+                }
+                label="Virtual"
+              />
+            </Grid>
             <Grid item xs={8}>
               <TextField
                 id="outlined-basic"
@@ -201,7 +253,6 @@ export default function GantriesGraph() {
               <Button
                 variant="contained"
                 onClick={() => {
-                  console.log(weight)
                   handleImportButton(weight)
                 }}
               >导入</Button>

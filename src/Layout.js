@@ -62,13 +62,13 @@ export default function Layout() {
             handleClose()
           }}>home</MenuItem>
           <MenuItem onClick={()=>{
-            navigate('/map')
+            navigate('/vehicle')
             handleClose()
-          }}>map</MenuItem>
+          }}>vehicle</MenuItem>
           <MenuItem onClick={()=>{
-            navigate('/gantries')
+            navigate('/gantry')
             handleClose()
-          }}>gantries</MenuItem>
+          }}>gantry</MenuItem>
         </Menu>
       </div>
       <div className={classes.container}>
