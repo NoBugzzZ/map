@@ -1,10 +1,10 @@
 import { useRoutes } from 'hookrouter';
-import { HomePage, Map, NotFoundPage, GantriesGraph } from './pages';
+import { HomePage, Map, NotFoundPage,GantryPage } from './pages';
 
 const routes = {
   '/': () => <HomePage />,
   '/vehicle': () => <Map />,
-  '/gantry': () => <GantriesGraph />
+  '/gantry': () => <GantryPage />
 };
 
 const Route = () => {

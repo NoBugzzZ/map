@@ -168,67 +168,83 @@ export default function MapPage() {
   }
 
   const handleVehicleButtonClick = (checked) => {
-    const newselectVehicleRows = [...selectVehicleRows]
-    for (const selectVehicleRow of selectVehicleRows) {
-      if (checked.indexOf(selectVehicleRow.id) === -1) {
-        const currentIndex = newselectVehicleRows.findIndex(element => element.id === selectVehicleRow.id)
-        newselectVehicleRows.splice(currentIndex, 1)
+    var newSelectVehicleRows = []
+    for (const ckd of checked) {
+      const row = vehicles.find(element => element.id === ckd)
+      if (row) {
+        var positions = getPositions(row.info['PASSSTATION'])
+        const currentIndex = positions.length - 1
+        newSelectVehicleRows.push({
+          id: ckd,
+          position: currentIndex >= 0 ? positions[currentIndex] : {},
+          path: positions,
+          color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
+          info: row.info
+        })
       }
     }
-    setSelectVehicleRows(newselectVehicleRows)
-    if (newselectVehicleRows.length < checked.length) {
-      var newSelectVehicleRows = []
-      let newChecked = _.cloneDeep(checked)
-      let flag = false
-      for (const ckd of checked) {
-        if (newselectVehicleRows.findIndex(element => element.id === ckd) === -1) {
-          const row = vehicles.find(element => element.id === ckd)
-          if (row) {
-            var positions = getPositions(row.info['PASSSTATION'])
-            const currentIndex = positions.length - 1
-            newSelectVehicleRows.push({
-              id: ckd,
-              position: currentIndex >= 0 ? positions[currentIndex] : {},
-              path: positions,
-              color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
-              info: row.info
-            })
-          }
-        }
+    setSelectVehicleRows(newSelectVehicleRows)
+  }
+
+  const getPositionsByTIMEOrder = (value) => {
+    if (typeof value === 'undefined') return []
+    const res = []
+    value.forEach((v) => {
+      let { LONGITUDE: { $numberDecimal: longitude }, LATITUDE: { $numberDecimal: latitude }, TIME: timestamp, ...context } = v
+      longitude = parseFloat(longitude)
+      latitude = parseFloat(latitude)
+      if (isValidForLatitude(latitude) && isValidForLongitude(longitude)) {
+        res.push({
+          longitude,
+          latitude,
+          timestamp: moment.unix(timestamp / 1000).toISOString(),
+          order: timestamp,
+          context,
+        })
       }
-      setSelectVehicleRows(prev => {
-        return [
-          ...prev,
-          ...newSelectVehicleRows
-        ]
-      })
-    }
+    })
+    return res.sort((a, b) => {
+      return (a.order - b.order)
+    })
   }
 
   const handleTrafficTransactionsListButtonClick = (checked) => {
-    const newselectTrafficTransactionsRows = [...selectTrafficTransactionsRows]
-    for (const selectTrafficTransactionsRow of selectTrafficTransactionsRows) {
-      if (checked.indexOf(selectTrafficTransactionsRow.id) === -1) {
-        const currentIndex = newselectTrafficTransactionsRows.findIndex(element => element.id === selectTrafficTransactionsRow.id)
-        newselectTrafficTransactionsRows.splice(currentIndex, 1)
+    const newSelectTrafficTransactionsRows = []
+    for (const ckd of checked) {
+      const row = trafficTransactions.find(element => element.id === ckd)
+      if (row) {
+        var positions = getPositionsByTIMEOrder(row.info['STATIONINFO'])
+        newSelectTrafficTransactionsRows.push({
+          ...row,
+          path: positions,
+          color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
+        })
       }
     }
-    if (newselectTrafficTransactionsRows.length < checked.length) {
-      for (const ckd of checked) {
-        if (newselectTrafficTransactionsRows.findIndex(element => element.id === ckd) === -1) {
-          const row = trafficTransactions.find(element => element.id === ckd)
-          if(row){
-            newselectTrafficTransactionsRows.push(row)
-          }
-        }
-      }
-      console.log(newselectTrafficTransactionsRows)
-    }
+    setSelectTrafficTransactionsRows(newSelectTrafficTransactionsRows)
   }
 
   const handleQueryFilter = ({ queryType, queryFilter }) => {
-    if (queryType === 'gantry') {
-
+    if (queryType === 'trafficTransaction') {
+      CarReq.getTrafficTransactions(10, 0, queryFilter).then(data => {
+        let { items } = data
+        const newRows = items.map(item => {
+          const { _id } = item
+          var positions = getPositionsByTIMEOrder(item['STATIONINFO'])
+          return {
+            id: _id,
+            info: item,
+            path: positions,
+            color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
+          }
+        })
+        setSelectTrafficTransactionsRows(prev=>{
+          return [
+            ...prev,
+            ...newRows
+          ]
+        })
+      })
     } else if (queryType === 'vehicle') {
       CarReq.getVehicles(10, 0, queryFilter).then(data => {
         const { items } = data
@@ -253,6 +269,13 @@ export default function MapPage() {
     }
   }
 
+  const clearAllTypeSelectedRows = () => {
+    setSelectVehicleRows([])
+    setVehicleCheckedStatus({ checked: [] })
+    setSelectTrafficTransactionsRows([])
+    setTrafficTransactionsCheckedStatus({ checked: [] })
+  }
+
   return (
     <Grid container spacing={2} className={classes.container}>
       <Grid item xs={3} className={classes.container}>
@@ -267,8 +290,7 @@ export default function MapPage() {
                 variant="contained"
                 color="error"
                 onClick={() => {
-                  setSelectVehicleRows([])
-                  setVehicleCheckedStatus({ checked: [] })
+                  clearAllTypeSelectedRows()
                 }}
               >
                 清除
@@ -308,7 +330,7 @@ export default function MapPage() {
         </Box>
       </Grid>
       <Grid item xs={9} className={classes.container}>
-        <Map selectVehicleRows={selectVehicleRows} />
+        <Map selectVehicleRows={selectVehicleRows} selectTrafficTransactionsRows={selectTrafficTransactionsRows} />
       </Grid>
     </Grid>
 

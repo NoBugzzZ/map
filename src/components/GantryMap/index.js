@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Map, Markers, Polyline } from 'react-amap'
-import { getNodes, getEdges } from "../requests/graph";
+import { Map, Markers, Polyline, InfoWindow } from 'react-amap'
+import { getNodes, getEdges } from "../../requests/graph";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField';
@@ -8,8 +8,19 @@ import Grid from '@mui/material/Grid';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+import { makeStyles } from '@mui/styles';
+import Editor from "@monaco-editor/react";
+import FlowChart from '../FlowChart';
 
 var _ = require('lodash')
+
+const useStyle = makeStyles({
+  gridcontainer: {
+  },
+  griditem: {
+    padding: '20px',
+  }
+})
 
 const isValid = ({ longitude, latitude }) => {
   if (
@@ -23,7 +34,11 @@ const isValid = ({ longitude, latitude }) => {
   return false
 }
 
-export default function GantriesGraph() {
+export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRows }) {
+
+  const classes = useStyle()
+  const [infoWindow, setInfoWindow] = React.useState({ visible: false, position: { longitude: 120, latitude: 30 }, content: 'content', size: { width: 500, height: 150 }, offset: [2, -35] });
+
   const [weight, setWeight] = useState({ min: 0.1, max: 1 })
   const [graphNodes, setGraphNodes] = useState(null)
   const [graphEdges, setGraphEdges] = useState(null)
@@ -38,21 +53,26 @@ export default function GantriesGraph() {
   const [displayGraph, setDisplayGraph] = useState(null)
 
   const [HEXID, setHEXID] = useState('')
-  const [center, setCenter] = useState({ longitude: 120, latitude: 37 })
-  const [zoom, setZoom] = useState(5)
   const [centerAndZoom, setCenterAndZoom] = useState({ center: { longitude: 120, latitude: 37 }, zoom: 5 })
-  const [mapInstance, setMapInstance] = useState(null)
 
-  // useEffect(() => {
-  //   if (weight) {
-  //     getNodes().then(data => setGraphNodes(data))
-  //     getEdges(weight).then(data => setGraphEdges(data))
-  //   }
-  // }, [weight])
+  useEffect(() => {
+    if (selectedGantries.length > 0) {
+      setGraphNodes(null)
+      setGraphEdges(null)
+      setGraph(null)
+      setNodes([])
+      setEdges(null)
+      setBackEdges(null)
+      setDisplayGraph(null)
+
+      const lastIndex = selectedGantries.length - 1
+      const { position } = selectedGantries[lastIndex]
+      setCenterAndZoom({ center: { ...position }, zoom: 8 })
+    }
+  }, [selectedGantries])
 
   useEffect(() => {
     if (graphNodes && graphEdges) {
-      // console.log(graphNodes,graphEdges)
       let newGraph = {}
       for (let i in graphNodes) {
         const [longitude, latitude, type] = graphNodes[i]
@@ -105,7 +125,6 @@ export default function GantriesGraph() {
 
   useEffect(() => {
     if (displayGraph) {
-      console.log(displayGraph)
       let newGraph = _.cloneDeep(displayGraph)
       let newNodes = []
       let newEdges = []
@@ -188,6 +207,8 @@ export default function GantriesGraph() {
   }, [displayGraph])
 
   const handleImportButton = () => {
+    clearAllTypeSelectedRows()
+
     setGraphNodes(null)
     setGraphEdges(null)
     setGraph(null)
@@ -202,7 +223,6 @@ export default function GantriesGraph() {
 
   const findPosition = () => {
     let newCenterAndZoom = {}
-    console.log(HEXID)
     const find = nodes.find(node => node.label === HEXID)
     if (find) {
       const { position } = find
@@ -212,6 +232,25 @@ export default function GantriesGraph() {
     }
   }
 
+
+  const getInfoWindow = () => {
+    return (
+      <Grid container spacing={0} className={classes.gridcontainer}>
+        <Grid item xs={6}>
+          <Editor
+            height={infoWindow.size.height - 20}
+            language="json"
+            value={infoWindow.content}
+          />
+        </Grid>
+        <Grid item xs={6} className={classes.griditem}>
+          <FlowChart infoWindow={infoWindow} />
+        </Grid>
+      </Grid>
+    )
+  }
+
+
   return (
     <Map
       amapkey={'c4682e400c06b2b8be5e65b99c6404f5'}
@@ -219,7 +258,7 @@ export default function GantriesGraph() {
       center={centerAndZoom.center}
       events={{
         created: (ins) => {
-          setMapInstance(ins)
+          // setMapInstance(ins)
         },
         zoomchange: () => {
           // const newZoom = mapInstance.getZoom()
@@ -245,9 +284,8 @@ export default function GantriesGraph() {
         events={{
           click: (e, marker) => {
             const extData = marker.getExtData()
-            const {label,position:{longitude,latitude}}=extData
+            const { label, position: { longitude, latitude } } = extData
             alert(label)
-            console.log(longitude+','+latitude)
           }
         }}
         render={extData => {
@@ -272,6 +310,50 @@ export default function GantriesGraph() {
       />
       {edges}
       {backEdges}
+
+      <InfoWindow
+        position={infoWindow.position}
+        // content={infoWindow.content}
+        visible={infoWindow.visible}
+        size={infoWindow.size}
+        isCustom={false}
+        offset={infoWindow.offset}
+        events={{
+          close: (e) => {
+            setInfoWindow({ ...infoWindow, visible: false })
+          }
+        }}
+      >
+        {getInfoWindow()}
+      </InfoWindow>
+
+      <Markers
+        markers={selectedGantries}
+        useCluster={true}
+        zIndex={10}
+        events={{
+          click: (e, marker) => {
+            const extData = marker.getExtData()
+            const { position: { longitude, latitude } } = extData
+            setInfoWindow({ ...infoWindow, visible: true, position: { longitude, latitude }, content: JSON.stringify(extData.info, null, 2), size: { width: 1000, height: 500 }, offset: [0, -35] })
+          }
+        }}
+        render={extData => {
+          return (
+            <div
+              style={{
+                background: `url(https://img.icons8.com/ios-filled/30/000000/overhead-crane.png)`,
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                width: '30px',
+                height: '30px',
+              }}
+            ></div>
+          )
+        }}
+      >
+      </Markers>
 
       <div className="customLayer" style={{ position: 'absolute', right: '100px', bottom: '30px', width: '250px' }}>
         <Box sx={{ width: '100%' }}>

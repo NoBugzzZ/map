@@ -43,10 +43,12 @@ export default function QueryFilter({ handleQueryFilter }) {
             onChange={handleQueryTypeChange}
           >
             <MenuItem value={'vehicle'}>vehicle</MenuItem>
+            <MenuItem value={'gantry'}>gantry</MenuItem>
+            <MenuItem value={'trafficTransaction'}>trafficTransaction</MenuItem>
           </Select>
         </FormControl>
         <Grid container spacing={3}>
-          <Grid item xs={6}>
+          <Grid item xs={12}>
             <div style={{ width: '400px', height: '400px' }}>
               <Editor
                 title="QueryFilter"
@@ -58,9 +60,6 @@ export default function QueryFilter({ handleQueryFilter }) {
                 onChange={(value, event) => { }}
               />
             </div>
-          </Grid>
-          <Grid item xs={6}>
-            b
           </Grid>
         </Grid>
         <Button variant="contained" color="primary" onClick={() => {

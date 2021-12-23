@@ -1,6 +1,6 @@
 import Map from "./Map";
 import HomePage from "./Home";
 import NotFoundPage from './NotFoundPage'
-import GantriesGraph from "./GantriesGraph";
+import GantryPage from "./GantryPage";
 
-export { Map, HomePage, NotFoundPage, GantriesGraph}
+export { Map, HomePage, NotFoundPage, GantryPage }
