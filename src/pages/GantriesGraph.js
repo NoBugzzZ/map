@@ -40,6 +40,7 @@ export default function GantriesGraph() {
   const [HEXID, setHEXID] = useState('')
   const [center, setCenter] = useState({ longitude: 120, latitude: 37 })
   const [zoom, setZoom] = useState(5)
+  const [centerAndZoom, setCenterAndZoom] = useState({ center: { longitude: 120, latitude: 37 }, zoom: 5 })
   const [mapInstance, setMapInstance] = useState(null)
 
   // useEffect(() => {
@@ -200,31 +201,33 @@ export default function GantriesGraph() {
   }
 
   const findPosition = () => {
+    let newCenterAndZoom = {}
     console.log(HEXID)
     const find = nodes.find(node => node.label === HEXID)
     if (find) {
       const { position } = find
-      setCenter(position)
-      setZoom(18)
+      newCenterAndZoom['center'] = position
+      newCenterAndZoom['zoom'] = 18
+      setCenterAndZoom(newCenterAndZoom)
     }
   }
 
   return (
     <Map
       amapkey={'c4682e400c06b2b8be5e65b99c6404f5'}
-      zoom={zoom}
-      center={center}
+      zoom={centerAndZoom.zoom}
+      center={centerAndZoom.center}
       events={{
         created: (ins) => {
           setMapInstance(ins)
         },
         zoomchange: () => {
-          const newZoom = mapInstance.getZoom()
-          setZoom(newZoom)
+          // const newZoom = mapInstance.getZoom()
+          // setZoom(newZoom)
         },
         moveend: () => {
-          const { R: longitude, Q: latitude } = mapInstance.getCenter()
-          setCenter({ longitude, latitude })
+          // const { R: longitude, Q: latitude } = mapInstance.getCenter()
+          // setCenter({ longitude, latitude })
         },
       }}
     >
@@ -242,7 +245,9 @@ export default function GantriesGraph() {
         events={{
           click: (e, marker) => {
             const extData = marker.getExtData()
-            alert(extData.label)
+            const {label,position:{longitude,latitude}}=extData
+            alert(label)
+            console.log(longitude+','+latitude)
           }
         }}
         render={extData => {
