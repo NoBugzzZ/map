@@ -284,6 +284,7 @@ export default function GantriesGraph() {
                     onChange={(event) => {
                       setIsDisplayPhysicalGantry(event.target.checked)
                     }}
+                    id="physicalswitch"
                   />
                 }
                 label="Physical"
@@ -297,6 +298,7 @@ export default function GantriesGraph() {
                     onChange={(event) => {
                       setIsDisplayVirtualGantry(event.target.checked)
                     }}
+                    id="virtualswitch"
                   />
                 }
                 label="Virtual"
@@ -358,6 +360,7 @@ export default function GantriesGraph() {
                 onClick={() => {
                   handleImportButton()
                 }}
+                id="importbutton"
               >导入</Button>
             </Grid>
             <Grid item xs={8}>
@@ -368,6 +371,7 @@ export default function GantriesGraph() {
                 onChange={(e) => {
                   setHEXID(e.target.value)
                 }}
+                id="hexidtextfield"
               />
             </Grid>
             <Grid item xs={4}>
@@ -376,6 +380,7 @@ export default function GantriesGraph() {
                 onClick={() => {
                   findPosition()
                 }}
+                id="querybutton"
               >查询</Button>
             </Grid>
           </Grid>
