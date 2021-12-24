@@ -109,6 +109,7 @@ export default function MapPage() {
 
   const getTrafficTransactions = (limit, skip, query) => {
     CarReq.getTrafficTransactions(limit, skip, query).then(data => {
+      console.log(data)
       let { items, count } = data
       const newRows = items.map(item => {
         const { _id } = item
@@ -126,7 +127,16 @@ export default function MapPage() {
 
   React.useEffect(() => {
     getVehicles(NUMBER_PER_PAGE)
-    getTrafficTransactions(NUMBER_PER_PAGE)
+    getTrafficTransactions(NUMBER_PER_PAGE, 0, {
+      STATIONINFO: {
+        $elemMatch: {
+          $or: [
+            { GANTRYPOSITIONFLAG: "省界入口" }, { GANTRYPOSITIONFLAG: "省界出口" }
+          ]
+        }
+      }
+    }
+    )
   }, [])
 
   const isValidForLongitude = (longitude) => {
@@ -164,7 +174,16 @@ export default function MapPage() {
   }
   const handleTrafficTransactionsPageChange = (value) => {
     setTrafficTransactions([])
-    getTrafficTransactions(NUMBER_PER_PAGE, (value - 1) * NUMBER_PER_PAGE)
+    getTrafficTransactions(NUMBER_PER_PAGE, (value - 1) * NUMBER_PER_PAGE, {
+      STATIONINFO: {
+        $elemMatch: {
+          $or: [
+            { GANTRYPOSITIONFLAG: "省界入口" }, { GANTRYPOSITIONFLAG: "省界出口" }
+          ]
+        }
+      }
+    }
+    )
   }
 
   const handleVehicleButtonClick = (checked) => {
@@ -238,7 +257,7 @@ export default function MapPage() {
             color: 'rgb(' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ',' + Math.floor(Math.random() * 255) + ')',
           }
         })
-        setSelectTrafficTransactionsRows(prev=>{
+        setSelectTrafficTransactionsRows(prev => {
           return [
             ...prev,
             ...newRows
