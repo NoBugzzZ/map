@@ -153,9 +153,9 @@ export default function MapPage() {
     if (typeof value === 'undefined') return []
     const res = []
     value.forEach((v) => {
-      let { LONGITUDE: { $numberDecimal: longitude }, LATITUDE: { $numberDecimal: latitude }, TIME: timestamp, ...context } = v
-      longitude = parseFloat(longitude)
-      latitude = parseFloat(latitude)
+      let { LOCATION, TIME: timestamp, ...context } = v
+      let longitude = parseFloat(LOCATION[1])
+      let latitude = parseFloat(LOCATION[0])
       if (isValidForLatitude(latitude) && isValidForLongitude(longitude)) {
         res.push({
           longitude,
@@ -209,9 +209,9 @@ export default function MapPage() {
     if (typeof value === 'undefined') return []
     const res = []
     value.forEach((v) => {
-      let { LONGITUDE: { $numberDecimal: longitude }, LATITUDE: { $numberDecimal: latitude }, TIME: timestamp, ...context } = v
-      longitude = parseFloat(longitude)
-      latitude = parseFloat(latitude)
+      let { LOCATION, TIME: timestamp, ...context } = v
+      let longitude = parseFloat(LOCATION[1]['$numberDecimal'])
+      let latitude = parseFloat(LOCATION[0]['$numberDecimal'])
       if (isValidForLatitude(latitude) && isValidForLongitude(longitude)) {
         res.push({
           longitude,
