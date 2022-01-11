@@ -64,7 +64,7 @@ steps:
       BASE_URL_WITH_PORT:
         from_secret: prod_base_url_with_port
     commands:
-      - export REACT_APP_API_URL_BACKEND=http://expressway-map.$${BASE_URL_WITH_PORT}
+      - export REACT_APP_API_URL_BACKEND=http://sd-express.$${BASE_URL_WITH_PORT}
       # TODO: Remove all warnings
       - CI=false npm run build
 
@@ -97,7 +97,7 @@ steps:
       release: ditto-expressway-map
       namespace: ditto-expressway
       values: "ingress.enabled=true,\
-        ingress.hosts[0].host=expressway-map.$${BASE_URL},\
+        ingress.hosts[0].host=sd-express.$${BASE_URL},\
         ingress.hosts[0].paths[0].path=/,\
         image.tag=${DRONE_COMMIT_SHA:0:8},\
         image.repository=192.168.10.101:5000/ditto-expressway-map"
