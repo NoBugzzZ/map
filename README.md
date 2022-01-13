@@ -1,6 +1,12 @@
 ## 环境
-node v14  
-npm v6
+node v16.13.2  
+npm 8.1.2
+
+## 环境配置
+|  操作系统   | 环境配置  |
+|  -  | -  |
+| mac  | 点击[官网安装器链接](https://nodejs.org/dist/v16.13.2/node-v16.13.2.pkg)下载安装即可 |
+| 其他操作系统  | 参照[教程](https://www.runoob.com/nodejs/nodejs-install-setup.html)配置即可 |
 
 ## 安装依赖
 ```
@@ -11,6 +17,11 @@ npm install
 REACT_APP_API_URL_BACKEND=${url} npm start
 ```
 ${url}需要替换成[mapbackend](https://github.com/NoBugzzZ/mapbackend)的提供的API地址
+
+例如一条完整的命令行
+```
+REACT_APP_API_URL_BACKEND=http://localhost:3000 npm start
+```
 
 ## 设置端口
 .env文件设置PORT
