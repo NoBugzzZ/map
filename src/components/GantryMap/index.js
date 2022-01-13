@@ -74,16 +74,17 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
   useEffect(() => {
     if (graphNodes && graphEdges) {
       let newGraph = {}
+      let keys = Object.keys(graphNodes)
       for (let i in graphNodes) {
         const [longitude, latitude, type] = graphNodes[i]
         if (isValid({ longitude, latitude })) {
           newGraph[i] = { position: { longitude, latitude }, targets: [], type }
         } else {
-          console.log(`${i}的longitude=${longitude},latitude=${latitude}`)
+          console.log(`${i}的longitude=${longitude},latitude=${latitude}不合法`)
+          const findIndex=keys.findIndex(k=>k===i)
+          keys.splice(findIndex,1)
         }
       }
-      const keys = Object.keys(graphNodes)
-
       graphEdges.forEach((graphEdge, index) => {
         const { source, target, edgeWeight, flow } = graphEdge
         const findSource = keys.find(k => k === source)
