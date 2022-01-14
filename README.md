@@ -24,7 +24,7 @@ REACT_APP_API_URL_BACKEND=http://localhost:3000 npm start
 ```
 
 ## 设置端口
-.env文件设置PORT
+在根目录下有个.env文件，可以设置PORT，例如本应用的端口位8123
 
 # vehicle页面
 ## 查找
