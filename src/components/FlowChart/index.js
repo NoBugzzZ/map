@@ -13,7 +13,7 @@ export default function ({ infoWindow }) {
       if (value) {
         const newData = value.map(v => {
           const [flow,timestamp]=v
-          const time=moment.unix(timestamp/1000).toISOString()
+          const time=moment.unix(timestamp/1000).format()
           return {
             flow,
             time

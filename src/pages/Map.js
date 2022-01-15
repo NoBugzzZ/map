@@ -109,7 +109,6 @@ export default function MapPage() {
 
   const getTrafficTransactions = (limit, skip, query) => {
     CarReq.getTrafficTransactions(limit, skip, query).then(data => {
-      console.log(data)
       let { items, count } = data
       const newRows = items.map(item => {
         const { _id } = item
@@ -131,7 +130,7 @@ export default function MapPage() {
       STATIONINFO: {
         $elemMatch: {
           $or: [
-            { GANTRYPOSITIONFLAG: "省界入口" }, { GANTRYPOSITIONFLAG: "省界出口" }
+            { GANTRYPOSITIONFLAG: 1 }, { GANTRYPOSITIONFLAG: 2 }
           ]
         }
       }
@@ -160,7 +159,7 @@ export default function MapPage() {
         res.push({
           longitude,
           latitude,
-          timestamp: moment.unix(timestamp / 1000).toISOString(),
+          timestamp: moment.unix(timestamp / 1000).format(),
           context,
         })
       }
@@ -178,7 +177,7 @@ export default function MapPage() {
       STATIONINFO: {
         $elemMatch: {
           $or: [
-            { GANTRYPOSITIONFLAG: "省界入口" }, { GANTRYPOSITIONFLAG: "省界出口" }
+            { GANTRYPOSITIONFLAG: 1 }, { GANTRYPOSITIONFLAG: 2 }
           ]
         }
       }
@@ -216,7 +215,7 @@ export default function MapPage() {
         res.push({
           longitude,
           latitude,
-          timestamp: moment.unix(timestamp / 1000).toISOString(),
+          timestamp: moment.unix(timestamp / 1000).format(),
           order: timestamp,
           context,
         })
