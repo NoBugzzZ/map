@@ -23,9 +23,15 @@ export async function getEdges(weight) {
     headers: {
       'Content-Type': 'application/json'
     },
-    data:{
+    data: {
       weight
     }
   })
+  return data
+}
+
+export async function getSimplepair() {
+  let url = backendApi + '/api/graph/simplepair'
+  const { data } = await axios.get(url)
   return data
 }

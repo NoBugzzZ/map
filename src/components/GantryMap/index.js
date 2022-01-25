@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Map, Markers, Polyline, InfoWindow } from 'react-amap'
-import { getNodes, getEdges } from "../../requests/graph";
+import { getNodes, getEdges, getSimplepair } from "../../requests/graph";
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField';
@@ -51,9 +51,17 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
   const [isDisplayPhysicalGantry, setIsDisplayPhysicalGantry] = useState(false)
   const [isDisplayVirtualGantry, setIsDisplayVirtualGantry] = useState(false)
   const [displayGraph, setDisplayGraph] = useState(null)
+  const [edgesDisplayFlag, setEdgesDisplayFlag] = useState(false)
 
   const [HEXID, setHEXID] = useState('')
   const [centerAndZoom, setCenterAndZoom] = useState({ center: { longitude: 120, latitude: 37 }, zoom: 5 })
+
+  const [simplepairs, setSimplepairs] = useState(null)
+  const [simplepairsGraph, setSimplepairsGraph] = useState(null)
+  const [displaySimplepairsGraph, setDisplaySimplepairsGraph] = useState(null)
+  const [simplepairsEdges, setSimplepairsEdges] = useState(null)
+  const [simplepairsBackEdges, setSimplepairsBackEdges] = useState(null)
+  const [simplepairsDisplayFlag, setSimplepairsDisplayFlag] = useState(false)
 
   useEffect(() => {
     if (selectedGantries.length > 0) {
@@ -64,6 +72,12 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
       setEdges(null)
       setBackEdges(null)
       setDisplayGraph(null)
+
+      setSimplepairs(null)
+      setSimplepairsGraph(null)
+      setDisplaySimplepairsGraph(null)
+      setSimplepairsEdges(null)
+      setSimplepairsBackEdges(null)
 
       const lastIndex = selectedGantries.length - 1
       const { position } = selectedGantries[lastIndex]
@@ -81,8 +95,8 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
           newGraph[i] = { position: { longitude, latitude }, targets: [], type }
         } else {
           console.log(`${i}的longitude=${longitude},latitude=${latitude}不合法`)
-          const findIndex=keys.findIndex(k=>k===i)
-          keys.splice(findIndex,1)
+          const findIndex = keys.findIndex(k => k === i)
+          keys.splice(findIndex, 1)
         }
       }
       graphEdges.forEach((graphEdge, index) => {
@@ -104,6 +118,38 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
   }, [graphNodes, graphEdges])
 
   useEffect(() => {
+    if (graphNodes && simplepairs) {
+      let newGraph = {}
+      let keys = Object.keys(graphNodes)
+      for (let i in graphNodes) {
+        const [longitude, latitude, type] = graphNodes[i]
+        if (isValid({ longitude, latitude })) {
+          newGraph[i] = { position: { longitude, latitude }, targets: [], type }
+        } else {
+          console.log(`${i}的longitude=${longitude},latitude=${latitude}不合法`)
+          const findIndex = keys.findIndex(k => k === i)
+          keys.splice(findIndex, 1)
+        }
+      }
+      simplepairs.forEach((graphEdge, index) => {
+        const { source, target } = graphEdge
+        const findSource = keys.find(k => k === source)
+        const findTarget = keys.find(k => k === target)
+        if (findSource && findTarget) {
+          if (findSource !== findTarget) {
+            newGraph[source].targets.push({ target })
+          } else {
+            console.log(`${source}->${target},自旋`)
+          }
+        } else {
+          console.log(`${source}或${target}的点不存在`)
+        }
+      })
+      setSimplepairsGraph(newGraph)
+    }
+  }, [graphNodes, simplepairs])
+
+  useEffect(() => {
     if (graph) {
       let newDisplayGraph = {}
       if (isDisplayPhysicalGantry) {
@@ -123,6 +169,27 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
       setDisplayGraph(newDisplayGraph)
     }
   }, [graph, isDisplayPhysicalGantry, isDisplayVirtualGantry])
+
+  useEffect(() => {
+    if (simplepairsGraph) {
+      let newDisplayGraph = {}
+      if (isDisplayPhysicalGantry) {
+        for (let key in simplepairsGraph) {
+          if (simplepairsGraph[key].type === 0) {
+            newDisplayGraph[key] = simplepairsGraph[key]
+          }
+        }
+      }
+      if (isDisplayVirtualGantry) {
+        for (let key in simplepairsGraph) {
+          if (simplepairsGraph[key].type === 1) {
+            newDisplayGraph[key] = simplepairsGraph[key]
+          }
+        }
+      }
+      setDisplaySimplepairsGraph(newDisplayGraph)
+    }
+  }, [simplepairsGraph, isDisplayPhysicalGantry, isDisplayVirtualGantry])
 
   useEffect(() => {
     if (displayGraph) {
@@ -207,10 +274,86 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
     }
   }, [displayGraph])
 
+  useEffect(() => {
+    if (displaySimplepairsGraph) {
+      let newGraph = _.cloneDeep(displaySimplepairsGraph)
+      let newNodes = []
+      let newEdges = []
+      let newBackEdges = []
+      const keys = Object.keys(newGraph)
+      keys.forEach(key => {
+        const { position, targets, type } = newGraph[key]
+        newNodes.push({ position, label: key, type })
+        targets.forEach((target, index) => {
+          const { target: targetNode } = target
+          if (newGraph.hasOwnProperty(targetNode)) {
+            let { position: targetPosition, targets: targetTargets } = newGraph[targetNode]
+            let context = {
+              path: [{ ...position }, { ...targetPosition }],
+            }
+            const findIndex = targetTargets.findIndex(t => t.target === key)
+            if (findIndex !== -1) {
+              newBackEdges.push({
+                path: [{ ...targetPosition }, { ...position }]
+              })
+              targetTargets.splice(findIndex, 1)
+              newGraph[targetNode].targets = _.cloneDeep(targetTargets)
+            }
+            newEdges.push({ ...context })
+          }
+        })
+      })
+      setNodes(newNodes)
+      setSimplepairsEdges(newEdges.map(edge => {
+        const { path } = edge
+        return (
+          <Polyline
+            path={path}
+            showDir={true}
+            style={{ strokeColor: '#00bfff', strokeWeight: 5, strokeOpacity: 0.8 }}
+            events={{
+              click: () => {
+              }
+            }}
+            draggable={true}
+          />
+        )
+      }))
+      setSimplepairsBackEdges(newBackEdges.map(backEdge => {
+        const { path } = backEdge
+        let [sourcePosition, targetPosition] = path
+        const { longitude: sourceLongitude, latitude: sourceLatitude } = sourcePosition
+        const { longitude: targetLongitude, latitude: targetLatitude } = targetPosition
+        const offset = 0.0003
+        const newPath = [
+          {
+            longitude: sourceLongitude - offset,
+            latitude: sourceLatitude - offset
+          },
+          {
+            longitude: targetLongitude - offset,
+            latitude: targetLatitude - offset
+          }
+        ]
+        return (
+          <Polyline
+            path={path}
+            showDir={true}
+            style={{ strokeColor: '#00bfff', strokeWeight: 5, strokeOpacity: 0.8 }}
+            events={{
+              click: () => {
+              }
+            }}
+            draggable={true}
+          />
+        )
+      }))
+    }
+  }, [displaySimplepairsGraph])
+
   const handleImportButton = () => {
     clearAllTypeSelectedRows()
 
-    setGraphNodes(null)
     setGraphEdges(null)
     setGraph(null)
     setNodes([])
@@ -218,8 +361,23 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
     setBackEdges(null)
     setDisplayGraph(null)
 
-    getNodes().then(data => setGraphNodes(data))
+    if (graphNodes === null) {
+      getNodes().then(data => setGraphNodes(data))
+    }
     getEdges(weight).then(data => setGraphEdges(data))
+  }
+
+  const handleSimplepairImportButton = () => {
+    clearAllTypeSelectedRows()
+
+    if (graphNodes === null) {
+      getNodes().then(data => setGraphNodes(data))
+    }
+    if (simplepairs === null) {
+      getSimplepair().then(data => {
+        setSimplepairs(data)
+      })
+    }
   }
 
   const findPosition = () => {
@@ -309,8 +467,11 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
           }
         }}
       />
-      {edges}
-      {backEdges}
+      {edgesDisplayFlag ? edges : null}
+      {edgesDisplayFlag ? backEdges : null}
+
+      {simplepairsDisplayFlag ? simplepairsEdges : null}
+      {simplepairsDisplayFlag ? simplepairsBackEdges : null}
 
       <InfoWindow
         position={infoWindow.position}
@@ -356,7 +517,7 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
       >
       </Markers>
 
-      <div className="customLayer" style={{ position: 'absolute', right: '100px', bottom: '30px', width: '250px' }}>
+      <div className="customLayer" style={{ position: 'absolute', right: '30px', bottom: '30px', width: '400px' }}>
         <Box sx={{ width: '100%' }}>
           <Grid container spacing={2}>
             <Grid item xs={6}>
@@ -387,7 +548,30 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
                 label="Virtual"
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={6}>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  handleSimplepairImportButton()
+                }}
+                id="querybutton"
+              >导入真实连通关系</Button>
+            </Grid>
+            <Grid item xs={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={simplepairsDisplayFlag}
+                    onChange={(event) => {
+                      setSimplepairsDisplayFlag(event.target.checked)
+                    }}
+                    id="simplepairsDisplayFlagSwitch"
+                  />
+                }
+                label=""
+              />
+            </Grid>
+            <Grid item xs={3}>
               <TextField
                 label="MinWeight"
                 variant="standard"
@@ -412,7 +596,8 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
                 type="number"
               />
             </Grid>
-            <Grid item xs={4}>
+
+            <Grid item xs={3}>
               <TextField
                 label="MaxWeight"
                 variant="standard"
@@ -437,7 +622,7 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
                 type="number"
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <Button
                 variant="contained"
                 onClick={() => {
@@ -446,7 +631,21 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
                 id="importbutton"
               >导入</Button>
             </Grid>
-            <Grid item xs={8}>
+            <Grid item xs={3}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={edgesDisplayFlag}
+                    onChange={(event) => {
+                      setEdgesDisplayFlag(event.target.checked)
+                    }}
+                    id="edgesDisplayFlagSwitch"
+                  />
+                }
+                label=""
+              />
+            </Grid>
+            <Grid item xs={6}>
               <TextField
                 label="HEX_ID"
                 variant="standard"
@@ -457,7 +656,7 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
                 id="hexidtextfield"
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={6}>
               <Button
                 variant="contained"
                 onClick={() => {
