@@ -356,7 +356,6 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
 
     setGraphEdges(null)
     setGraph(null)
-    setNodes([])
     setEdges(null)
     setBackEdges(null)
     setDisplayGraph(null)
@@ -568,12 +567,12 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
                     id="simplepairsDisplayFlagSwitch"
                   />
                 }
-                label=""
+                label="是否显示"
               />
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={2}>
               <TextField
-                label="MinWeight"
+                label="Min"
                 variant="standard"
                 value={weight ? weight.min : 0.1}
                 onChange={(e) => {
@@ -597,9 +596,9 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
               />
             </Grid>
 
-            <Grid item xs={3}>
+            <Grid item xs={2}>
               <TextField
-                label="MaxWeight"
+                label="Max"
                 variant="standard"
                 value={weight ? weight.max : 1}
                 onChange={(e) => {
@@ -631,7 +630,7 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
                 id="importbutton"
               >导入</Button>
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={5}>
               <FormControlLabel
                 control={
                   <Switch
@@ -642,7 +641,7 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
                     id="edgesDisplayFlagSwitch"
                   />
                 }
-                label=""
+                label="是否显示"
               />
             </Grid>
             <Grid item xs={6}>
