@@ -310,7 +310,7 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
           <Polyline
             path={path}
             showDir={true}
-            style={{ strokeColor: '#00bfff', strokeWeight: 5, strokeOpacity: 0.8 }}
+            style={{ strokeColor: 'red', strokeWeight: 5, strokeOpacity: 0.8 }}
             events={{
               click: () => {
               }
@@ -339,7 +339,7 @@ export default function GantriesGraph({ selectedGantries, clearAllTypeSelectedRo
           <Polyline
             path={path}
             showDir={true}
-            style={{ strokeColor: '#00bfff', strokeWeight: 5, strokeOpacity: 0.8 }}
+            style={{ strokeColor: 'red', strokeWeight: 5, strokeOpacity: 0.8 }}
             events={{
               click: () => {
               }
