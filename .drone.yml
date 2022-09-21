@@ -99,6 +99,7 @@ steps:
       values: "ingress.enabled=true,\
         ingress.hosts[0].host=sd-express.$${BASE_URL},\
         ingress.hosts[0].paths[0].path=/,\
+        ingress.hosts[0].paths[0].pathType=ImplementationSpecific,\
         image.tag=${DRONE_COMMIT_SHA:0:8},\
         image.repository=192.168.10.101:5000/ditto-expressway-map"
 
