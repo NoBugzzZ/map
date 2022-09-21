@@ -64,7 +64,7 @@ steps:
       BASE_URL_WITH_PORT:
         from_secret: prod_base_url_with_port
     commands:
-      - export REACT_APP_API_URL_BACKEND=https://sd-express.$${BASE_URL_WITH_PORT}
+      - export REACT_APP_API_URL_BACKEND=https://sd-express.$${BASE_URL}
       # TODO: Remove all warnings
       - CI=false npm run build
 
